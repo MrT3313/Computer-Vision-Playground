@@ -4,17 +4,22 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Signal
 
+from src.core.kernel_config import KernelConfig
+from src.ui.kernel_grid_widget import KernelGridWidget
+
 
 class ControlPanel(QWidget):
     grid_size_changed = Signal(int)
     kernel_size_changed = Signal(int)
     filter_type_changed = Signal(str)
+    kernel_value_changed = Signal()
     previous_position = Signal()
     next_position = Signal()
     reset_position = Signal()
     
-    def __init__(self, parent=None):
+    def __init__(self, kernel_config: KernelConfig, parent=None):
         super().__init__(parent)
+        self.kernel_config = kernel_config
         self.setup_ui()
     
     def setup_ui(self):
@@ -54,6 +59,13 @@ class ControlPanel(QWidget):
         self.filter_type_combo.currentTextChanged.connect(self.filter_type_changed.emit)
         filter_type_layout.addWidget(self.filter_type_combo)
         kernel_layout.addLayout(filter_type_layout)
+        
+        kernel_values_label = QLabel("Kernel Values:")
+        kernel_layout.addWidget(kernel_values_label)
+        
+        self.kernel_grid = KernelGridWidget(self.kernel_config)
+        self.kernel_grid.value_changed.connect(self.kernel_value_changed.emit)
+        kernel_layout.addWidget(self.kernel_grid)
         
         kernel_group.setLayout(kernel_layout)
         layout.addWidget(kernel_group)
@@ -96,3 +108,7 @@ class ControlPanel(QWidget):
         self.prev_button.setEnabled(enabled)
         self.next_button.setEnabled(enabled)
         self.reset_button.setEnabled(enabled)
+    
+    def update_kernel_grid(self):
+        self.kernel_grid.update_size()
+        self.kernel_grid.update()

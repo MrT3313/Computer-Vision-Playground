@@ -1,14 +1,35 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class KernelConfig:
     size: int = 3
     filter_type: str = "Blur"
+    values: list[list[float]] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not self.values:
+            self.values = [[0.0 for _ in range(self.size)] for _ in range(self.size)]
 
     @property
     def half_size(self) -> int:
         return self.size // 2
+
+    def get_value(self, row: int, col: int) -> float:
+        if 0 <= row < self.size and 0 <= col < self.size:
+            return self.values[row][col]
+        return 0.0
+
+    def set_value(self, row: int, col: int, value: float):
+        if 0 <= row < self.size and 0 <= col < self.size:
+            self.values[row][col] = value
+
+    def resize(self, new_size: int):
+        self.size = new_size
+        self.values = [[0.0 for _ in range(new_size)] for _ in range(new_size)]
+
+    def get_flat_values(self) -> list[float]:
+        return [value for row in self.values for value in row]
 
 
 @dataclass

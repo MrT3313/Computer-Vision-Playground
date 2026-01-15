@@ -91,7 +91,7 @@ class MainWindow(QMainWindow):
         
         control_group = QGroupBox("3. Control Panel")
         control_layout = QVBoxLayout()
-        self.control_panel = ControlPanel()
+        self.control_panel = ControlPanel(self.kernel_config)
         control_layout.addWidget(self.control_panel)
         control_group.setLayout(control_layout)
         
@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         self.control_panel.grid_size_changed.connect(self.on_grid_size_changed)
         self.control_panel.kernel_size_changed.connect(self.on_kernel_size_changed)
         self.control_panel.filter_type_changed.connect(self.on_filter_type_changed)
+        self.control_panel.kernel_value_changed.connect(self.on_kernel_value_changed)
         self.control_panel.previous_position.connect(self.on_previous_position)
         self.control_panel.next_position.connect(self.on_next_position)
         self.control_panel.reset_position.connect(self.on_reset_position)
@@ -123,11 +124,15 @@ class MainWindow(QMainWindow):
         self.update_kernel_position()
         
     def on_kernel_size_changed(self, size: int):
-        self.kernel_config.size = size
+        self.kernel_config.resize(size)
+        self.control_panel.update_kernel_grid()
         self.update_kernel_position()
         
     def on_filter_type_changed(self, filter_type: str):
         self.kernel_config.filter_type = filter_type
+    
+    def on_kernel_value_changed(self):
+        pass
         
     def on_previous_position(self):
         if self.kernel_position.current_index > 0:
