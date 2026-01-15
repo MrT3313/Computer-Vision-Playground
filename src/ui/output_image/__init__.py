@@ -1,0 +1,1 @@
+from src.ui.output_image.output_image_widget import OutputImageWidget

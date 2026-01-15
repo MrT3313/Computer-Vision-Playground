@@ -1,41 +1,34 @@
 from PySide6.QtWidgets import QWidget
-from PySide6.QtCore import Qt, Signal, QRect
-from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
+from PySide6.QtCore import Qt, QRect
+from PySide6.QtGui import QPainter, QPen, QColor, QFont
 
 from src.core.image_data import ImageData
 
 
-class PixelGridWidget(QWidget):
-    pixel_clicked = Signal(int, int)
-    
+class PixelGridBase(QWidget):
     def __init__(
         self,
         image_data: ImageData,
-        editable: bool = True,
         show_values: bool = False,
-        parent=None
+        parent=None,
+        cell_size: int = 20
     ):
         super().__init__(parent)
         self.image_data = image_data
-        self.editable = editable
+        self.cell_size = cell_size
         self.show_values = show_values
-        
-        self.cell_size = 30
-        self.kernel_highlight_row = -1
-        self.kernel_highlight_col = -1
-        self.kernel_size = 3
-        self.output_highlight_row = -1
-        self.output_highlight_col = -1
-        
-        self.is_drawing = False
-        self.last_drawn_cell = (-1, -1)
         
         self.setMinimumSize(
             self.image_data.width * self.cell_size + 1,
             self.image_data.height * self.cell_size + 1
         )
         
-        self.setMouseTracking(True)
+        self.kernel_highlight_row = -1
+        self.kernel_highlight_col = -1
+        self.kernel_size = 3
+        
+        self.output_highlight_row = -1
+        self.output_highlight_col = -1
 
     def set_image_data(self, image_data: ImageData):
         self.image_data = image_data
@@ -70,36 +63,6 @@ class PixelGridWidget(QWidget):
         col = int(x) // self.cell_size
         row = int(y) // self.cell_size
         return row, col
-
-    def mousePressEvent(self, event: QMouseEvent):
-        if not self.editable:
-            return
-        
-        if event.button() == Qt.MouseButton.LeftButton:
-            row, col = self.get_cell_at_position(event.position().x(), event.position().y())
-            if 0 <= row < self.image_data.height and 0 <= col < self.image_data.width:
-                self.is_drawing = True
-                self.last_drawn_cell = (row, col)
-                self.image_data.toggle_pixel(row, col)
-                self.pixel_clicked.emit(row, col)
-                self.update()
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        if not self.editable or not self.is_drawing:
-            return
-        
-        row, col = self.get_cell_at_position(event.position().x(), event.position().y())
-        if 0 <= row < self.image_data.height and 0 <= col < self.image_data.width:
-            if (row, col) != self.last_drawn_cell:
-                self.last_drawn_cell = (row, col)
-                self.image_data.toggle_pixel(row, col)
-                self.pixel_clicked.emit(row, col)
-                self.update()
-
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.is_drawing = False
-            self.last_drawn_cell = (-1, -1)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -142,7 +105,8 @@ class PixelGridWidget(QWidget):
                 painter.drawRect(x, y, self.cell_size, self.cell_size)
                 
                 if self.show_values and pixel_value is not None:
-                    painter.setPen(QPen(QColor(255, 0, 0) if pixel_value == 0 else QColor(100, 100, 100), 1))
+                    text_color = QColor(255, 0, 0) if pixel_value == 0 else QColor(100, 100, 100)
+                    painter.setPen(QPen(text_color, 1))
                     font = QFont("Arial", 8)
                     painter.setFont(font)
                     painter.drawText(
