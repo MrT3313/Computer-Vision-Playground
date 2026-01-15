@@ -34,6 +34,8 @@ class PixelGridWidget(QWidget):
             self.image_data.width * self.cell_size + 1,
             self.image_data.height * self.cell_size + 1
         )
+        
+        self.setMouseTracking(True)
 
     def set_image_data(self, image_data: ImageData):
         self.image_data = image_data
@@ -64,9 +66,9 @@ class PixelGridWidget(QWidget):
         self.output_highlight_col = -1
         self.update()
 
-    def get_cell_at_position(self, x: int, y: int) -> tuple[int, int]:
-        col = x // self.cell_size
-        row = y // self.cell_size
+    def get_cell_at_position(self, x: float, y: float) -> tuple[int, int]:
+        col = int(x) // self.cell_size
+        row = int(y) // self.cell_size
         return row, col
 
     def mousePressEvent(self, event: QMouseEvent):

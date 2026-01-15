@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
         input_group = QGroupBox("1. Raw Input Image")
         input_layout = QVBoxLayout()
         input_scroll = QScrollArea()
-        input_scroll.setWidgetResizable(True)
+        input_scroll.setWidgetResizable(False)
         self.input_grid = PixelGridWidget(
             self.image_data,
             editable=True,
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         computed_group = QGroupBox("4. Computed Pixel Values")
         computed_layout = QVBoxLayout()
         computed_scroll = QScrollArea()
-        computed_scroll.setWidgetResizable(True)
+        computed_scroll.setWidgetResizable(False)
         self.computed_grid = PixelGridWidget(
             self.output_data,
             editable=False,
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         values_group = QGroupBox("2. Raw Image Pixel Values")
         values_layout = QVBoxLayout()
         values_scroll = QScrollArea()
-        values_scroll.setWidgetResizable(True)
+        values_scroll.setWidgetResizable(False)
         self.values_grid = PixelGridWidget(
             self.image_data,
             editable=False,
@@ -78,7 +78,7 @@ class MainWindow(QMainWindow):
         output_group = QGroupBox("5. Output Image")
         output_layout = QVBoxLayout()
         output_scroll = QScrollArea()
-        output_scroll.setWidgetResizable(True)
+        output_scroll.setWidgetResizable(False)
         self.output_grid = PixelGridWidget(
             self.output_data,
             editable=False,
