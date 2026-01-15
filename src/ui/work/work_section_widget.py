@@ -1,191 +1,214 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel, QScrollArea, QFrame
 from PySide6.QtCore import Qt
 
-from src.core.filter_calculator import MeanFilterResult
+from src.core.filter_calculator import ConvolutionResult, CrossCorrelationResult, MedianFilterResult
 
 
 class WorkSectionWidget(QWidget):
-    """
-    Widget that displays the step-by-step calculation details for filter operations.
-    Shows coordinates, values, and mathematical operations in a visual grid format.
-    """
     
     def __init__(self, parent=None):
-        """
-        Initialize the work section widget.
-        
-        Args:
-            parent: Optional parent widget
-        """
         super().__init__(parent)
-        # Track which filter type is currently being displayed
-        self.current_filter = "Mean"
-        # Store references to all grid labels for cleanup when updating display
         self.grid_labels = []
         self.setup_ui()
     
     def setup_ui(self):
-        """
-        Set up the UI components for the work section.
-        Creates a scrollable area containing a grid for calculation details and a summary section.
-        """
-        # Main layout for this widget with no margins
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         
-        # Create scroll area to handle content that might be larger than the visible area
         scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)  # Allow content to resize with the scroll area
+        scroll_area.setWidgetResizable(True)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         
-        # Container widget that will be placed inside the scroll area
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(0)  # Remove spacing between elements
-        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)  # Align content to top
+        self.content_layout.setSpacing(0)
+        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        # Grid container holds the table showing coordinates and values
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout(self.grid_container)
-        self.grid_layout.setSpacing(2)  # Small spacing between grid cells
-        self.grid_layout.setContentsMargins(10, 10, 10, 0)  # Padding around the grid
+        self.grid_layout.setSpacing(2)
+        self.grid_layout.setContentsMargins(10, 10, 10, 0)
         self.content_layout.addWidget(self.grid_container)
         
-        # Summary label displays the mathematical calculation (sum, division, result)
         self.summary_label = QLabel("")
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self.summary_label.setWordWrap(True)  # Allow text to wrap for long calculations
+        self.summary_label.setWordWrap(True)
         self.summary_label.setStyleSheet("padding: 10px 10px 10px 10px; font-size: 12px;")
         self.content_layout.addWidget(self.summary_label)
         
-        # Placeholder label shown when no calculation is available
         self.no_data_label = QLabel("No calculation to display")
         self.no_data_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.no_data_label.setStyleSheet("padding: 20px; color: gray;")
         self.content_layout.addWidget(self.no_data_label)
         
-        # Add the content widget to the scroll area and the scroll area to main layout
         scroll_area.setWidget(self.content_widget)
         layout.addWidget(scroll_area)
     
-    def set_filter_type(self, filter_type: str):
-        """
-        Update the current filter type being displayed.
-        
-        Args:
-            filter_type: Name of the filter (e.g., "Mean", "Gaussian", etc.)
-        """
-        self.current_filter = filter_type
     
     def clear(self):
-        """
-        Clear all calculation data and show the "no data" placeholder.
-        Used when no pixel is selected or when switching contexts.
-        """
         self._clear_grid()
         self.summary_label.setText("")
-        # Show placeholder, hide actual content
         self.no_data_label.show()
         self.grid_container.hide()
         self.summary_label.hide()
     
     def _clear_grid(self):
-        """
-        Remove all labels from the grid layout.
-        Properly deletes Qt widgets to prevent memory leaks.
-        """
         for label in self.grid_labels:
-            label.deleteLater()  # Schedule widget for deletion
-        self.grid_labels.clear()  # Clear the reference list
+            label.deleteLater()
+        self.grid_labels.clear()
     
-    def update_mean_calculation(self, result: MeanFilterResult):
-        """
-        Display the mean filter calculation in a visual grid format.
+    def _prepare_display(self):
+        self._clear_grid()
+        self.no_data_label.hide()
+        self.grid_container.show()
+        self.summary_label.show()
+    
+    def _add_header_label(self, text: str, row: int):
+        header = QLabel(text)
+        header.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        header.setStyleSheet("font-weight: bold; padding-right: 10px;")
+        self.grid_layout.addWidget(header, row, 0)
+        self.grid_labels.append(header)
+        return header
+    
+    def _add_data_column(self, idx: int, coord: tuple, value: int, extra_data: dict = None):
+        index_label = QLabel(str(idx))
+        index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        index_label.setStyleSheet("font-weight: bold; padding: 5px 8px; color: #666;")
+        self.grid_layout.addWidget(index_label, 0, idx + 1)
+        self.grid_labels.append(index_label)
         
-        Creates a table showing:
-        - Row 0: Index numbers (0, 1, 2, ...)
-        - Row 1: Coordinates of each pixel used in the calculation
-        - Row 2: Pixel values at those coordinates
+        coord_label = QLabel(f"({coord[0]},{coord[1]})")
+        coord_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        coord_label.setStyleSheet("padding: 5px 8px;")
+        self.grid_layout.addWidget(coord_label, 1, idx + 1)
+        self.grid_labels.append(coord_label)
         
-        Then shows the sum and mean calculation below the grid.
+        value_label = QLabel(str(value))
+        value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        value_label.setStyleSheet("padding: 5px 8px;")
+        self.grid_layout.addWidget(value_label, 2, idx + 1)
+        self.grid_labels.append(value_label)
         
-        Args:
-            result: MeanFilterResult containing coordinates, values, and calculated mean
-        """
-        # If no result provided, clear the display
+        if extra_data:
+            for row_num, data_value in extra_data.items():
+                data_label = QLabel(data_value)
+                data_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                data_label.setStyleSheet("padding: 5px 8px;")
+                self.grid_layout.addWidget(data_label, row_num, idx + 1)
+                self.grid_labels.append(data_label)
+    
+    def update_convolution_calculation(self, result: ConvolutionResult):
         if result is None:
             self.clear()
             return
         
-        # Remove any previous calculation from the grid
-        self._clear_grid()
+        self._prepare_display()
         
-        # Hide placeholder and show the actual content
-        self.no_data_label.hide()
-        self.grid_container.show()
-        self.summary_label.show()
+        self._add_header_label("Coordinates:", 1)
+        self._add_header_label("Values:", 2)
+        self._add_header_label("Kernel Adjusted Calculations:", 3)
+        self._add_header_label("Kernel Adjusted Values:", 4)
         
-        # Create "Coordinates:" label in the first column of row 1
-        coord_header = QLabel("Coordinates:")
-        coord_header.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        coord_header.setStyleSheet("font-weight: bold; padding-right: 10px;")
-        self.grid_layout.addWidget(coord_header, 1, 0)  # Row 1, Column 0
-        self.grid_labels.append(coord_header)
+        flattened_kernel = [val for row in result.flipped_kernel for val in row]
+        is_mean = all(k == 1.0 for k in flattened_kernel)
+        constant = result.constant
+        adjusted_values = [v * k * constant for v, k in zip(result.values, flattened_kernel)]
+        calculations = [f"({v}×{k:.2f})×{constant:.2f}" for v, k in zip(result.values, flattened_kernel)]
         
-        # Create "Values:" label in the first column of row 2
-        value_header = QLabel("Values:")
-        value_header.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        value_header.setStyleSheet("font-weight: bold; padding-right: 10px;")
-        self.grid_layout.addWidget(value_header, 2, 0)  # Row 2, Column 0
-        self.grid_labels.append(value_header)
-        
-        # Loop through each coordinate-value pair and create column for it
-        for idx, (coord, value) in enumerate(zip(result.coordinates, result.values)):
-            # Row 0: Index number (0, 1, 2, ...)
-            index_label = QLabel(str(idx))
-            index_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            index_label.setStyleSheet("font-weight: bold; padding: 5px 8px; color: #666;")
-            self.grid_layout.addWidget(index_label, 0, idx + 1)  # Row 0, Column idx+1
-            self.grid_labels.append(index_label)
-            
-            # Row 1: Coordinate as (x,y)
-            coord_label = QLabel(f"({coord[0]},{coord[1]})")
-            coord_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            coord_label.setStyleSheet("padding: 5px 8px;")
-            self.grid_layout.addWidget(coord_label, 1, idx + 1)  # Row 1, Column idx+1
-            self.grid_labels.append(coord_label)
-            
-            # Row 2: Pixel value at that coordinate
-            value_label = QLabel(str(value))
-            value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            value_label.setStyleSheet("padding: 5px 8px;")
-            self.grid_layout.addWidget(value_label, 2, idx + 1)  # Row 2, Column idx+1
-            self.grid_labels.append(value_label)
-        
-        # Display the mathematical summary (sum and mean calculation)
-        self._update_summary(result)
+        if is_mean:
+            for idx, (coord, value, calc, adj_val) in enumerate(zip(result.coordinates, result.values, calculations, adjusted_values)):
+                self._add_data_column(idx, coord, value, {3: calc, 4: f"{adj_val:.2f}"})
+            self._set_mean_filter_summary_with_adjusted(adjusted_values, len(result.values), result.result)
+        else:
+            self._add_header_label("Kernel (flipped):", 5)
+            for idx, (coord, value, calc, adj_val, kernel_val) in enumerate(zip(result.coordinates, result.values, calculations, adjusted_values, flattened_kernel)):
+                self._add_data_column(idx, coord, value, {3: calc, 4: f"{adj_val:.2f}", 5: f"{kernel_val:.2f}"})
+            self._set_linear_filter_summary(result.values, flattened_kernel, result.result, "Convolution")
     
-    def _update_summary(self, result: MeanFilterResult):
-        """
-        Create and display the mathematical summary of the mean filter calculation.
+    def update_cross_correlation_calculation(self, result: CrossCorrelationResult):
+        if result is None:
+            self.clear()
+            return
         
-        Shows two lines:
-        1. Sum: Lists all values added together and shows the total
-        2. Mean: Shows total divided by count of values, displays result to 2 decimal places
+        self._prepare_display()
         
-        Args:
-            result: MeanFilterResult containing the values and calculated results
-        """
-        # Create a string showing all values being added: "10 + 20 + 30"
-        values_sum_str = " + ".join([str(v) for v in result.values])
+        self._add_header_label("Coordinates:", 1)
+        self._add_header_label("Values:", 2)
+        self._add_header_label("Kernel Adjusted Calculations:", 3)
+        self._add_header_label("Kernel Adjusted Values:", 4)
         
-        # Build HTML summary showing the step-by-step calculation
+        flattened_kernel = [val for row in result.kernel_values for val in row]
+        is_mean = all(k == 1.0 for k in flattened_kernel)
+        constant = result.constant
+        adjusted_values = [v * k * constant for v, k in zip(result.values, flattened_kernel)]
+        calculations = [f"({v}×{k:.2f})×{constant:.2f}" for v, k in zip(result.values, flattened_kernel)]
+        
+        if is_mean:
+            for idx, (coord, value, calc, adj_val) in enumerate(zip(result.coordinates, result.values, calculations, adjusted_values)):
+                self._add_data_column(idx, coord, value, {3: calc, 4: f"{adj_val:.2f}"})
+            self._set_mean_filter_summary_with_adjusted(adjusted_values, len(result.values), result.result)
+        else:
+            self._add_header_label("Kernel:", 5)
+            for idx, (coord, value, calc, adj_val, kernel_val) in enumerate(zip(result.coordinates, result.values, calculations, adjusted_values, flattened_kernel)):
+                self._add_data_column(idx, coord, value, {3: calc, 4: f"{adj_val:.2f}", 5: f"{kernel_val:.2f}"})
+            self._set_linear_filter_summary(result.values, flattened_kernel, result.result, "Cross-Correlation")
+    
+    def update_median_calculation(self, result: MedianFilterResult):
+        if result is None:
+            self.clear()
+            return
+        
+        self._prepare_display()
+        
+        self._add_header_label("Coordinates:", 1)
+        self._add_header_label("Values:", 2)
+        self._add_header_label("Kernel Adjusted Calculations:", 3)
+        self._add_header_label("Kernel Adjusted Values:", 4)
+        
+        constant = result.constant
+        adjusted_values = [constant if v == result.median else 0.0 for v in result.values]
+        calculations = [f"{v}×{constant:.2f}" if v == result.median else "0" for v in result.values]
+        
+        for idx, (coord, value, calc, adj_val) in enumerate(zip(result.coordinates, result.values, calculations, adjusted_values)):
+            self._add_data_column(idx, coord, value, {3: calc, 4: f"{adj_val:.2f}"})
+        
+        sorted_str = ", ".join([str(v) for v in result.sorted_values])
+        median_idx = len(result.sorted_values) // 2
+        
         summary_text = f"""<div style='line-height: 1.8;'>
-<b>Sum:</b> {values_sum_str} = {result.total}<br/>
-<b>Mean:</b> {result.total} / {len(result.values)} = {result.mean:.2f}<br/>
+<b>Median Filter:</b><br/>
+<b>Sorted values:</b> [{sorted_str}]<br/>
+<b>Median:</b> values[{median_idx}] = {result.median:.2f}<br/>
+<b>Result:</b> {result.median:.2f} × {constant:.2f} = {result.result:.2f}<br/>
 </div>"""
         
-        # Display the summary in the label
+        self.summary_label.setText(summary_text)
+    
+    def _set_mean_filter_summary_with_adjusted(self, adjusted_values: list, count: int, final_result: float):
+        adjusted_str = " + ".join([f"{v:.2f}" for v in adjusted_values])
+        total = sum(adjusted_values)
+        mean = total / count
+        
+        summary_text = f"""<div style='line-height: 1.8;'>
+<b>Sum:</b> {adjusted_str} = {total:.2f}<br/>
+<b>Mean:</b> {total:.2f} / {count} = {mean:.2f}<br/>
+<b>Result:</b> {mean:.2f}<br/>
+</div>"""
+        
+        self.summary_label.setText(summary_text)
+    
+    def _set_linear_filter_summary(self, values: list, kernel: list, final_result: float, operation_name: str):
+        constant = final_result / sum([v * k for v, k in zip(values, kernel)]) if sum([v * k for v, k in zip(values, kernel)]) != 0 else 1.0
+        adjusted_values = [v * k * constant for v, k in zip(values, kernel)]
+        adjusted_str = " + ".join([f"{av:.2f}" for av in adjusted_values])
+        result_sum = sum(adjusted_values)
+        
+        summary_text = f"""<div style='line-height: 1.8;'>
+<b>Sum:</b> {adjusted_str} = {result_sum:.2f}<br/>
+<b>Result:</b> {result_sum:.2f}<br/>
+</div>"""
+        
         self.summary_label.setText(summary_text)

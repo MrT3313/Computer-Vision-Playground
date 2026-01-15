@@ -6,15 +6,20 @@ class KernelConfig:
     Configuration for a convolution kernel (filter).
     
     A kernel is a small matrix that slides over the image to perform operations.
-    For example, a 3x3 mean filter kernel would average 9 pixels at a time.
     
     Attributes:
         size: Dimension of the square kernel (e.g., 3 for a 3x3 kernel)
-        filter_type: Type of filter being applied (e.g., "Mean", "Blur", "Sharpen")
+        category: Filter category ("Linear" or "Non-Linear")
+        operation_type: Operation type ("Convolution" or "Cross-Correlation")
+        filter_selection: Specific filter ("Mean", "Custom", or "Median")
+        constant: Multiplier applied to filter results (default 1.0)
         values: 2D list of kernel weights/coefficients [row][col]
     """
     size: int = 3
-    filter_type: str = "Mean"
+    category: str = "Linear"
+    operation_type: str = "Convolution"
+    filter_selection: str = "Mean"
+    constant: float = 1.0
     values: list[list[float]] = field(default_factory=list)
 
     def __post_init__(self):

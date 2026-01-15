@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 
-# [!NOTE]
-# The @dataclass decorator automatically generates an __init__ method for you behind the scenes. Therefore when main_window.py calls ImageData(width=width, height=height), it will automatically call the __init__ method with the provided width and height. 
-# so while 10 is the default here, it will be overridden by the width and height passed in from main_window.py
+from src.consts.defaults import (
+    DEFAULT_IMAGE_WIDTH,
+    DEFAULT_IMAGE_HEIGHT,
+    DEFAULT_WHITE_PIXEL,
+    DEFAULT_BLACK_PIXEL,
+)
 
 @dataclass
 class ImageData:
@@ -19,14 +22,13 @@ class ImageData:
         height: Number of rows in the image
         pixels: 2D list of pixel values [row][col]
     """
-    width: int = 10
-    height: int = 10
+    width: int = DEFAULT_IMAGE_WIDTH
+    height: int = DEFAULT_IMAGE_HEIGHT
     pixels: list[list[int | None]] = field(default_factory=list)
 
     def __post_init__(self):
-        """Initialize pixel grid with white pixels if not provided."""
         if not self.pixels:
-            self.pixels = [[255 for _ in range(self.width)] for _ in range(self.height)]
+            self.pixels = [[DEFAULT_WHITE_PIXEL for _ in range(self.width)] for _ in range(self.height)]
 
     def get_pixel(self, row: int, col: int) -> int | None:
         """
@@ -56,29 +58,13 @@ class ImageData:
             self.pixels[row][col] = value
 
     def toggle_pixel(self, row: int, col: int):
-        """
-        Toggle a pixel between black (0) and white (255).
-        Used for drawing on the input image.
-        
-        Args:
-            row: Row index
-            col: Column index
-        """
         current = self.get_pixel(row, col)
-        self.set_pixel(row, col, 0 if current == 255 else 255)
+        self.set_pixel(row, col, DEFAULT_BLACK_PIXEL if current == DEFAULT_WHITE_PIXEL else DEFAULT_WHITE_PIXEL)
 
     def resize(self, new_width: int, new_height: int):
-        """
-        Resize the image grid and reset all pixels to white.
-        
-        Args:
-            new_width: New number of columns
-            new_height: New number of rows
-        """
         self.width = new_width
         self.height = new_height
-        self.pixels = [[255 for _ in range(new_width)] for _ in range(new_height)]
+        self.pixels = [[DEFAULT_WHITE_PIXEL for _ in range(new_width)] for _ in range(new_height)]
     
     def clear(self):
-        """Reset all pixels to white (255)."""
-        self.pixels = [[255 for _ in range(self.width)] for _ in range(self.height)]
+        self.pixels = [[DEFAULT_WHITE_PIXEL for _ in range(self.width)] for _ in range(self.height)]

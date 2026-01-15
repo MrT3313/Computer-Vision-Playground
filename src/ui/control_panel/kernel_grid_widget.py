@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, Signal, QRect
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
 
 from src.core.kernel_config import KernelConfig
+from src.consts.defaults import DEFAULT_KERNEL_GRID_CELL_SIZE
 
 
 class KernelGridWidget(QWidget):
@@ -27,8 +28,8 @@ class KernelGridWidget(QWidget):
         """
         super().__init__(parent)
         self.kernel_config = kernel_config
-        self.cell_size = 45  # Pixels per cell
-        self.editing_cell = None  # (row, col) of cell being edited, or None
+        self.cell_size = DEFAULT_KERNEL_GRID_CELL_SIZE
+        self.editing_cell = None
         self.line_edit = None  # QLineEdit widget for in-place editing
         
         self.update_size()

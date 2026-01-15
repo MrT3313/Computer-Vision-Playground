@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QPen, QColor, QFont
 
 from src.core.image_data import ImageData
+from src.consts.defaults import DEFAULT_IMAGE_GRID_CELL_SIZE
 
 
 class PixelGridBase(QWidget):
@@ -10,13 +11,15 @@ class PixelGridBase(QWidget):
         self,
         image_data: ImageData,
         show_values: bool = False,
+        show_colors: bool = True,
         parent=None,
-        cell_size: int = 20
+        cell_size: int = DEFAULT_IMAGE_GRID_CELL_SIZE
     ):
         super().__init__(parent)
         self.image_data = image_data
         self.cell_size = cell_size
         self.show_values = show_values
+        self.show_colors = show_colors
         
         self.setMinimumSize(
             self.image_data.width * self.cell_size + 1,
@@ -58,6 +61,10 @@ class PixelGridBase(QWidget):
         self.output_highlight_row = -1
         self.output_highlight_col = -1
         self.update()
+    
+    def set_show_colors(self, show_colors: bool):
+        self.show_colors = show_colors
+        self.update()
 
     def get_cell_at_position(self, x: float, y: float) -> tuple[int, int]:
         col = int(x) // self.cell_size
@@ -77,8 +84,10 @@ class PixelGridBase(QWidget):
                 
                 if pixel_value is None:
                     cell_color = QColor(255, 255, 255)
-                else:
+                elif self.show_colors:
                     cell_color = QColor(pixel_value, pixel_value, pixel_value)
+                else:
+                    cell_color = QColor(240, 240, 240)
                 painter.fillRect(x, y, self.cell_size, self.cell_size, cell_color)
                 
                 in_kernel = (
