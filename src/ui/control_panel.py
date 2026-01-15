@@ -33,7 +33,7 @@ class ControlPanel(QWidget):
         self.grid_size_spin = QSpinBox()
         self.grid_size_spin.setMinimum(5)
         self.grid_size_spin.setMaximum(50)
-        self.grid_size_spin.setValue(20)
+        self.grid_size_spin.setValue(10)
         self.grid_size_spin.valueChanged.connect(self.grid_size_changed.emit)
         grid_size_layout.addWidget(self.grid_size_spin)
         grid_layout.addLayout(grid_size_layout)
@@ -55,17 +55,26 @@ class ControlPanel(QWidget):
         filter_type_layout = QHBoxLayout()
         filter_type_layout.addWidget(QLabel("Filter Type:"))
         self.filter_type_combo = QComboBox()
-        self.filter_type_combo.addItems(["Blur", "Sobel", "Prewitt", "Sharpen", "Custom"])
+        self.filter_type_combo.addItems(
+            [
+                "Mean",
+                # "Blur",
+                # "Sharpen", 
+                # "Custom"
+            ]
+        )
         self.filter_type_combo.currentTextChanged.connect(self.filter_type_changed.emit)
         filter_type_layout.addWidget(self.filter_type_combo)
         kernel_layout.addLayout(filter_type_layout)
         
-        kernel_values_label = QLabel("Kernel Values:")
-        kernel_layout.addWidget(kernel_values_label)
+        self.kernel_values_label = QLabel("Kernel Values:")
+        kernel_layout.addWidget(self.kernel_values_label)
         
         self.kernel_grid = KernelGridWidget(self.kernel_config)
         self.kernel_grid.value_changed.connect(self.kernel_value_changed.emit)
         kernel_layout.addWidget(self.kernel_grid)
+        
+        self.update_kernel_values_state("Mean")
         
         kernel_group.setLayout(kernel_layout)
         layout.addWidget(kernel_group)
@@ -112,3 +121,13 @@ class ControlPanel(QWidget):
     def update_kernel_grid(self):
         self.kernel_grid.update_size()
         self.kernel_grid.update()
+    
+    def update_kernel_values_state(self, filter_type: str):
+        if filter_type == "Mean":
+            self.kernel_grid.setEnabled(False)
+            self.kernel_values_label.setText("Kernel Values: (disabled for Mean filter)")
+            self.kernel_values_label.setStyleSheet("color: gray;")
+        else:
+            self.kernel_grid.setEnabled(True)
+            self.kernel_values_label.setText("Kernel Values:")
+            self.kernel_values_label.setStyleSheet("")

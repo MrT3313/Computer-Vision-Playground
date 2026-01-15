@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 @dataclass
 class KernelConfig:
     size: int = 3
-    filter_type: str = "Blur"
+    filter_type: str = "Mean"
     values: list[list[float]] = field(default_factory=list)
 
     def __post_init__(self):

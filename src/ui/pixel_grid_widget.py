@@ -111,7 +111,11 @@ class PixelGridWidget(QWidget):
                 y = row * self.cell_size
                 
                 pixel_value = self.image_data.get_pixel(row, col)
-                cell_color = QColor(pixel_value, pixel_value, pixel_value)
+                
+                if pixel_value is None:
+                    cell_color = QColor(255, 255, 255)
+                else:
+                    cell_color = QColor(pixel_value, pixel_value, pixel_value)
                 painter.fillRect(x, y, self.cell_size, self.cell_size, cell_color)
                 
                 in_kernel = (
@@ -137,7 +141,7 @@ class PixelGridWidget(QWidget):
                 
                 painter.drawRect(x, y, self.cell_size, self.cell_size)
                 
-                if self.show_values:
+                if self.show_values and pixel_value is not None:
                     painter.setPen(QPen(QColor(255, 0, 0) if pixel_value == 0 else QColor(100, 100, 100), 1))
                     font = QFont("Arial", 8)
                     painter.setFont(font)
