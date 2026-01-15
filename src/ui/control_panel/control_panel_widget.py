@@ -1,31 +1,26 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-    QSpinBox, QDoubleSpinBox, QComboBox, QPushButton, QGroupBox, QCheckBox
+    QSpinBox, QComboBox, QPushButton, QGroupBox, QCheckBox
 )
 from PySide6.QtCore import Signal
 
-from src.core.kernel_config import KernelConfig
+from src.core.filter_config import KernelConfig
 from src.consts.defaults import (
     DEFAULT_GRID_SIZE,
     DEFAULT_GRID_SIZE_MIN,
     DEFAULT_GRID_SIZE_MAX,
     DEFAULT_SHOW_COLORS,
-    DEFAULT_CONSTANT_MULTIPLIER,
-    DEFAULT_CONSTANT_MULTIPLIER_MIN,
-    DEFAULT_CONSTANT_MULTIPLIER_MAX,
-    DEFAULT_CONSTANT_MULTIPLIER_STEP,
-    DEFAULT_CONSTANT_MULTIPLIER_DECIMALS,
+    DEFAULT_SHOW_PIXEL_VALUES,
 )
 
 
 class ControlPanel(QWidget):
     grid_size_changed = Signal(int)
     show_colors_changed = Signal(bool)
-    kernel_size_changed = Signal(int)
+    show_pixel_values_changed = Signal(bool)
     category_changed = Signal(str)
     operation_type_changed = Signal(str)
     filter_selection_changed = Signal(str)
-    constant_changed = Signal(float)
     kernel_value_changed = Signal()
     raw_image_mode_changed = Signal(str)
     previous_position = Signal()
@@ -60,10 +55,17 @@ class ControlPanel(QWidget):
         )
         grid_layout.addWidget(self.show_colors_checkbox)
         
+        self.show_pixel_values_checkbox = QCheckBox("Show Pixel Values")
+        self.show_pixel_values_checkbox.setChecked(DEFAULT_SHOW_PIXEL_VALUES)
+        self.show_pixel_values_checkbox.stateChanged.connect(
+            lambda state: self.show_pixel_values_changed.emit(state == 2)
+        )
+        grid_layout.addWidget(self.show_pixel_values_checkbox)
+        
         grid_group.setLayout(grid_layout)
         layout.addWidget(grid_group)
         
-        raw_image_group = QGroupBox("Raw Image Input Configuration")
+        raw_image_group = QGroupBox("Input Image Configuration")
         raw_image_layout = QVBoxLayout()
         
         mode_layout = QHBoxLayout()
@@ -77,16 +79,8 @@ class ControlPanel(QWidget):
         raw_image_group.setLayout(raw_image_layout)
         layout.addWidget(raw_image_group)
         
-        kernel_group = QGroupBox("Kernel Configuration")
+        kernel_group = QGroupBox("Filter Configuration")
         kernel_layout = QVBoxLayout()
-        
-        kernel_size_layout = QHBoxLayout()
-        kernel_size_layout.addWidget(QLabel("Kernel Size:"))
-        self.kernel_size_combo = QComboBox()
-        self.kernel_size_combo.addItems(["3x3", "5x5", "7x7", "9x9"])
-        self.kernel_size_combo.currentTextChanged.connect(self._on_kernel_size_changed)
-        kernel_size_layout.addWidget(self.kernel_size_combo)
-        kernel_layout.addLayout(kernel_size_layout)
         
         category_layout = QHBoxLayout()
         category_layout.addWidget(QLabel("Category:"))
@@ -111,17 +105,6 @@ class ControlPanel(QWidget):
         self.filter_selection_combo.currentTextChanged.connect(self.filter_selection_changed.emit)
         filter_selection_layout.addWidget(self.filter_selection_combo)
         kernel_layout.addLayout(filter_selection_layout)
-        
-        constant_layout = QHBoxLayout()
-        constant_layout.addWidget(QLabel("Constant Multiplier:"))
-        self.constant_spin = QDoubleSpinBox()
-        self.constant_spin.setRange(DEFAULT_CONSTANT_MULTIPLIER_MIN, DEFAULT_CONSTANT_MULTIPLIER_MAX)
-        self.constant_spin.setValue(DEFAULT_CONSTANT_MULTIPLIER)
-        self.constant_spin.setSingleStep(DEFAULT_CONSTANT_MULTIPLIER_STEP)
-        self.constant_spin.setDecimals(DEFAULT_CONSTANT_MULTIPLIER_DECIMALS)
-        self.constant_spin.valueChanged.connect(self.constant_changed.emit)
-        constant_layout.addWidget(self.constant_spin)
-        kernel_layout.addLayout(constant_layout)
         
         kernel_group.setLayout(kernel_layout)
         layout.addWidget(kernel_group)
@@ -157,12 +140,7 @@ class ControlPanel(QWidget):
         nav_group.setLayout(nav_layout)
         layout.addWidget(nav_group)
         
-        # Add stretchy space at bottom to push controls to top
         layout.addStretch()
-    
-    def _on_kernel_size_changed(self, text: str):
-        kernel_size = int(text.split('x')[0])
-        self.kernel_size_changed.emit(kernel_size)
     
     def _on_category_changed(self, category: str):
         if category == "Linear":

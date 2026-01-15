@@ -24,7 +24,7 @@ The codebase is organized into two main directories to separate business logic f
 Contains the core convolution and image processing logic with no UI dependencies.
 
 - **`image_data.py`** - Image representation as a 2D grid of pixel values (0-255)
-- **`kernel_config.py`** - Kernel configuration (size, type, values) and position tracking
+- **`filter_config.py`** - Kernel configuration (size, type, values) and position tracking
 - **`filter_calculator.py`** - Filter operations (currently mean/average filter)
 
 These modules handle all the math and data transformations. They can be tested and used independently of the UI.

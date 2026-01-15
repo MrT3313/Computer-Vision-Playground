@@ -4,10 +4,10 @@ from PySide6.QtWidgets import (
 )
 
 from src.core.image_data import ImageData
-from src.core.kernel_config import KernelConfig, KernelPosition
+from src.core.filter_config import KernelConfig, KernelPosition
 from src.core.filter_calculator import FilterCalculator
 from src.ui.raw_input_image.raw_input_image_widget import RawInputImageWidget
-from src.ui.kernel_values.kernel_values_widget import KernelValuesWidget
+from src.ui.kernel_config.kernel_values_widget import KernelValuesWidget
 from src.ui.computed_pixel_values.computed_pixel_values_widget import ComputedPixelValuesWidget
 from src.ui.control_panel.control_panel_widget import ControlPanel
 from src.ui.work.work_section_widget import WorkSectionWidget
@@ -71,27 +71,27 @@ class MainWindow(QMainWindow):
         # Grid layout for the main visualization area (left side)
         grid_layout = QGridLayout()
         
-        input_group = QGroupBox("Raw Input Image")
+        input_group = QGroupBox("Input Image")
         input_layout = QVBoxLayout()
         input_scroll = QScrollArea()
-        input_scroll.setWidgetResizable(False)
+        input_scroll.setWidgetResizable(True)
         self.input_grid = RawInputImageWidget(self.image_data)
         input_scroll.setWidget(self.input_grid)
         input_layout.addWidget(input_scroll)
         input_group.setLayout(input_layout)
         grid_layout.addWidget(input_group, 0, 0)
         
-        kernel_group = QGroupBox("Kernel Values")
+        kernel_group = QGroupBox("Kernel Configuration")
         kernel_layout = QVBoxLayout()
         self.kernel_values = KernelValuesWidget(self.kernel_config)
         kernel_layout.addWidget(self.kernel_values)
         kernel_group.setLayout(kernel_layout)
         grid_layout.addWidget(kernel_group, 0, 1)
         
-        computed_group = QGroupBox("Computed Pixel Values")
+        computed_group = QGroupBox("Output Image")
         computed_layout = QVBoxLayout()
         computed_scroll = QScrollArea()
-        computed_scroll.setWidgetResizable(False)
+        computed_scroll.setWidgetResizable(True)
         self.computed_grid = ComputedPixelValuesWidget(self.output_data)
         computed_scroll.setWidget(self.computed_grid)
         computed_layout.addWidget(computed_scroll)
@@ -125,11 +125,12 @@ class MainWindow(QMainWindow):
         self.input_grid.pixel_clicked.connect(self.on_input_changed)
         self.control_panel.grid_size_changed.connect(self.on_grid_size_changed)
         self.control_panel.show_colors_changed.connect(self.on_show_colors_changed)
-        self.control_panel.kernel_size_changed.connect(self.on_kernel_size_changed)
+        self.control_panel.show_pixel_values_changed.connect(self.on_show_pixel_values_changed)
+        self.kernel_values.kernel_size_changed.connect(self.on_kernel_size_changed)
         self.control_panel.category_changed.connect(self.on_category_changed)
         self.control_panel.operation_type_changed.connect(self.on_operation_type_changed)
         self.control_panel.filter_selection_changed.connect(self.on_filter_selection_changed)
-        self.control_panel.constant_changed.connect(self.on_constant_changed)
+        self.kernel_values.constant_changed.connect(self.on_constant_changed)
         self.kernel_values.value_changed.connect(self.on_kernel_value_changed)
         self.control_panel.raw_image_mode_changed.connect(self.on_raw_image_mode_changed)
         self.control_panel.previous_position.connect(self.on_previous_position)
@@ -151,10 +152,21 @@ class MainWindow(QMainWindow):
             
         self.update_highlights()
     
+    def reset_calculations_and_ui(self):
+        self.output_data.pixels = [[None for _ in range(self.output_data.width)] for _ in range(self.output_data.height)]
+        self.work_section.clear()
+        self.computed_grid.update()
+        self.kernel_position.set_position(
+            0,
+            self.image_data.width,
+            self.kernel_config.size
+        )
+        self.update_highlights()
+    
     # SIGNAL HANDLERS #########################################################
     ###########################################################################
     def on_input_changed(self, row: int, col: int):
-        pass
+        self.reset_calculations_and_ui()
         
     def on_grid_size_changed(self, size: int):
         self.image_data.resize(size, size)
@@ -165,11 +177,15 @@ class MainWindow(QMainWindow):
         self.input_grid.set_image_data(self.image_data)
         self.computed_grid.set_image_data(self.output_data)
         
-        self.update_kernel_position()
+        self.reset_calculations_and_ui()
     
     def on_show_colors_changed(self, show_colors: bool):
         self.input_grid.set_show_colors(show_colors)
         self.computed_grid.set_show_colors(show_colors)
+        
+    def on_show_pixel_values_changed(self, show_values: bool):
+        self.input_grid.set_show_values(show_values)
+        self.computed_grid.set_show_values(show_values)
         
     def on_kernel_size_changed(self, size: int):
         self.kernel_config.resize(size)
@@ -180,17 +196,15 @@ class MainWindow(QMainWindow):
                     self.kernel_config.set_value(r, c, 1.0)
         
         self.kernel_values.update_kernel_grid()
-        self.update_kernel_position()
+        self.reset_calculations_and_ui()
         
     def on_category_changed(self, category: str):
         self.kernel_config.category = category
-        self.output_data.pixels = [[None] * self.output_data.width for _ in range(self.output_data.height)]
-        self.computed_grid.update()
-        self.update_highlights()
+        self.reset_calculations_and_ui()
     
     def on_operation_type_changed(self, operation_type: str):
         self.kernel_config.operation_type = operation_type
-        self.update_highlights()
+        self.reset_calculations_and_ui()
     
     def on_filter_selection_changed(self, filter_selection: str):
         self.kernel_config.filter_selection = filter_selection
@@ -209,14 +223,14 @@ class MainWindow(QMainWindow):
             self.kernel_config.filter_selection
         )
         self.kernel_values.update_kernel_grid()
-        self.update_highlights()
+        self.reset_calculations_and_ui()
     
     def on_constant_changed(self, constant: float):
         self.kernel_config.constant = constant
-        self.update_highlights()
+        self.reset_calculations_and_ui()
     
     def on_kernel_value_changed(self):
-        pass
+        self.reset_calculations_and_ui()
     
     def on_raw_image_mode_changed(self, mode: str):
         self.input_grid.set_mode(mode)
@@ -240,18 +254,7 @@ class MainWindow(QMainWindow):
             self.update_highlights()
             
     def on_reset_position(self):
-        self.output_data.pixels = [[None for _ in range(self.output_data.width)] for _ in range(self.output_data.height)]
-        
-        self.work_section.clear()
-        
-        self.computed_grid.update()
-        
-        self.kernel_position.set_position(
-            0,
-            self.image_data.width,
-            self.kernel_config.size
-        )
-        self.update_highlights()
+        self.reset_calculations_and_ui()
         
     # FILTER CALCULATION ######################################################
     ###########################################################################

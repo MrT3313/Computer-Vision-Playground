@@ -32,6 +32,9 @@ class PixelGridBase(QWidget):
         
         self.output_highlight_row = -1
         self.output_highlight_col = -1
+        
+        self.offset_x = 0
+        self.offset_y = 0
 
     def set_image_data(self, image_data: ImageData):
         self.image_data = image_data
@@ -66,19 +69,28 @@ class PixelGridBase(QWidget):
         self.show_colors = show_colors
         self.update()
 
+    def set_show_values(self, show_values: bool):
+        self.show_values = show_values
+        self.update()
+
     def get_cell_at_position(self, x: float, y: float) -> tuple[int, int]:
-        col = int(x) // self.cell_size
-        row = int(y) // self.cell_size
+        adjusted_x = x - self.offset_x
+        adjusted_y = y - self.offset_y
+        col = int(adjusted_x) // self.cell_size
+        row = int(adjusted_y) // self.cell_size
         return row, col
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        self.offset_x = (self.width() - (self.image_data.width * self.cell_size)) // 2
+        self.offset_y = (self.height() - (self.image_data.height * self.cell_size)) // 2
 
         for row in range(self.image_data.height):
             for col in range(self.image_data.width):
-                x = col * self.cell_size
-                y = row * self.cell_size
+                x = col * self.cell_size + self.offset_x
+                y = row * self.cell_size + self.offset_y
                 
                 pixel_value = self.image_data.get_pixel(row, col)
                 
@@ -87,7 +99,7 @@ class PixelGridBase(QWidget):
                 elif self.show_colors:
                     cell_color = QColor(pixel_value, pixel_value, pixel_value)
                 else:
-                    cell_color = QColor(240, 240, 240)
+                    cell_color = QColor(255, 255, 255)
                 painter.fillRect(x, y, self.cell_size, self.cell_size, cell_color)
                 
                 in_kernel = (
@@ -125,8 +137,8 @@ class PixelGridBase(QWidget):
                     )
 
         if self.kernel_highlight_row >= 0 and self.kernel_highlight_col >= 0:
-            x = self.kernel_highlight_col * self.cell_size
-            y = self.kernel_highlight_row * self.cell_size
+            x = self.kernel_highlight_col * self.cell_size + self.offset_x
+            y = self.kernel_highlight_row * self.cell_size + self.offset_y
             width = self.kernel_size * self.cell_size
             height = self.kernel_size * self.cell_size
             

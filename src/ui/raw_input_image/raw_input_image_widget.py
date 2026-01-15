@@ -64,8 +64,8 @@ class RawInputImageWidget(PixelGridBase):
         self.editing_cell = (row, col)
         current_value = self.image_data.get_pixel(row, col)
         
-        x = col * self.cell_size
-        y = row * self.cell_size
+        x = col * self.cell_size + self.offset_x
+        y = row * self.cell_size + self.offset_y
         
         self.line_edit = QLineEdit(self)
         self.line_edit.setGeometry(x + 2, y + 2, self.cell_size - 4, self.cell_size - 4)

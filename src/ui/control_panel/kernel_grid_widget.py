@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit
 from PySide6.QtCore import Qt, Signal, QRect
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
 
-from src.core.kernel_config import KernelConfig
+from src.core.filter_config import KernelConfig
 from src.consts.defaults import DEFAULT_KERNEL_GRID_CELL_SIZE
 
 
@@ -30,10 +30,13 @@ class KernelGridWidget(QWidget):
         self.kernel_config = kernel_config
         self.cell_size = DEFAULT_KERNEL_GRID_CELL_SIZE
         self.editing_cell = None
-        self.line_edit = None  # QLineEdit widget for in-place editing
+        self.line_edit = None
+        
+        self.offset_x = 0
+        self.offset_y = 0
         
         self.update_size()
-        self.setMouseTracking(True)  # Enable mouse tracking for hover effects
+        self.setMouseTracking(True)
 
     def update_size(self):
         """
@@ -57,8 +60,10 @@ class KernelGridWidget(QWidget):
         Returns:
             (row, col) tuple of the cell at that position
         """
-        col = int(x) // self.cell_size
-        row = int(y) // self.cell_size
+        adjusted_x = x - self.offset_x
+        adjusted_y = y - self.offset_y
+        col = int(adjusted_x) // self.cell_size
+        row = int(adjusted_y) // self.cell_size
         return row, col
 
     def mousePressEvent(self, event: QMouseEvent):
@@ -83,18 +88,15 @@ class KernelGridWidget(QWidget):
             row: Row index of cell to edit
             col: Column index of cell to edit
         """
-        # Finish any existing edit first
         if self.line_edit:
             self.finish_editing()
         
         self.editing_cell = (row, col)
         current_value = self.kernel_config.get_value(row, col)
         
-        # Calculate position for the line edit
-        x = col * self.cell_size
-        y = row * self.cell_size
+        x = col * self.cell_size + self.offset_x
+        y = row * self.cell_size + self.offset_y
         
-        # Create line edit widget positioned over the cell
         self.line_edit = QLineEdit(self)
         self.line_edit.setGeometry(x + 2, y + 2, self.cell_size - 4, self.cell_size - 4)
         self.line_edit.setText(str(current_value))
@@ -147,12 +149,14 @@ class KernelGridWidget(QWidget):
         """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        self.offset_x = (self.width() - (self.kernel_config.size * self.cell_size)) // 2
+        self.offset_y = (self.height() - (self.kernel_config.size * self.cell_size)) // 2
 
-        # Draw each cell in the kernel grid
         for row in range(self.kernel_config.size):
             for col in range(self.kernel_config.size):
-                x = col * self.cell_size
-                y = row * self.cell_size
+                x = col * self.cell_size + self.offset_x
+                y = row * self.cell_size + self.offset_y
                 
                 is_editing = self.editing_cell == (row, col)
                 

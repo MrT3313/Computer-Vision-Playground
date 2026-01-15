@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from src.core.image_data import ImageData
-from src.core.kernel_config import KernelPosition, KernelConfig
+from src.core.filter_config import KernelPosition, KernelConfig
 
 
 @dataclass
