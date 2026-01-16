@@ -112,11 +112,15 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self._output_image, 1)
         
         # Create filter calculations widget for detailed computation display
-        filter_calculations = FilterCalculationsWidget()
+        self._filter_calculations = FilterCalculationsWidget(
+            self._input_model,
+            self._kernel_config._kernel_model,
+            self._coordinator
+        )
         
         # Add top row and calculations to left layout (top: 1, calculations: 0 = fixed height)
         left_layout.addWidget(top_row, 1)
-        left_layout.addWidget(filter_calculations, 0)
+        left_layout.addWidget(self._filter_calculations, 0)
         
         return left_widget
     
@@ -157,5 +161,19 @@ class MainWindow(QMainWindow):
         self._control_panel.show_colors_changed.connect(self._output_image.set_show_colors)
         
         self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
+        
+        # Connect filter changes to kernel config and filter calculations
+        self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
+        self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
+        
+        # Connect coordinator state and position changes to filter calculations
+        self._coordinator.state_changed.connect(self._filter_calculations.on_state_changed)
+        self._coordinator.position_changed.connect(self._filter_calculations.update_calculation)
+        
+        # Connect kernel changes to filter calculations
+        self._kernel_config._kernel_model.grid_changed.connect(self._filter_calculations.on_kernel_changed)
+        
+        # Connect constant changes to filter calculations
+        self._kernel_config.constant_input.value_changed.connect(self._filter_calculations.set_constant)
         
         return self._control_panel
