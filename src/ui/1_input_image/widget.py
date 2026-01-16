@@ -11,9 +11,9 @@ class InputImageWidget(QFrame):
     def _setup_ui(self):
         # Configure the frame's visual appearance with a box border
         self.setFrameShape(QFrame.Shape.Box)
-        self.setLineWidth(2)
-        self.setStyleSheet("background-color: grey;") 
-        self.setMinimumSize(200, 200)
+        self.setLineWidth(2) # Set border thickness to 2 pixels
+        self.setStyleSheet("background-color: grey;") # Set background color
+        self.setMinimumSize(200, 200) # Ensure minimum size of 200x200 pixels
         
         # Create the main vertical layout that will contain all child widgets
         main_layout = QVBoxLayout(self)

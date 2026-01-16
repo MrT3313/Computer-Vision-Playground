@@ -19,6 +19,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Computer Vision Playground")
         self.setMinimumSize(1200, 800)
         
+        # Initialize input and output models with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
         self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
         
@@ -126,6 +127,7 @@ class MainWindow(QMainWindow):
         control_panel = ControlPanelWidget()
         control_panel.setFixedWidth(300) # Fixed width of 300 pixels
         
+        # Connect control panel's grid size changed signal to input and output model's set grid size method
         control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
         control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
         
