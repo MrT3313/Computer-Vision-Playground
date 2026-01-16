@@ -9,7 +9,8 @@ class PixelGridWidget(QWidget):
 
         self._model = model
         self._highlighted_cells = []
-        self._highlight_color = QColor(100, 150, 255, 100)
+        self._highlight_color = QColor(100, 150, 255)
+        self._highlight_border_width = 3
         self._bordered_cell = None
         self._border_color = QColor(255, 140, 0)
         self._border_width = 3
@@ -86,10 +87,18 @@ class PixelGridWidget(QWidget):
                 
                 painter.fillRect(x, y, cell_size, cell_size, cell_color)
                 
-                if (row, col) in self._highlighted_cells:
-                    painter.fillRect(x, y, cell_size, cell_size, self._highlight_color)
-                
                 painter.setPen(border_pen)
+                painter.drawRect(x, y, cell_size, cell_size)
+        
+        for row, col in self._highlighted_cells:
+            if 0 <= row < grid_size and 0 <= col < grid_size:
+                x = offset_x + col * cell_size
+                y = offset_y + row * cell_size
+                
+                highlight_pen = QPen(self._highlight_color)
+                highlight_pen.setWidth(self._highlight_border_width)
+                highlight_pen.setCosmetic(True)
+                painter.setPen(highlight_pen)
                 painter.drawRect(x, y, cell_size, cell_size)
         
         if self._bordered_cell is not None:
