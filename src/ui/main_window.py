@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
-from core import ImageGridModel, KernelApplicationCoordinator
+from core import ImageGridModel, KernelApplicationCoordinator, ApplicationState
 from consts import DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE
 
 class MainWindow(QMainWindow):
@@ -176,4 +176,17 @@ class MainWindow(QMainWindow):
         # Connect constant changes to filter calculations
         self._kernel_config.constant_input.value_changed.connect(self._filter_calculations.set_constant)
         
+        # Auto-reset to INITIAL state when any configuration changes
+        self._input_model.grid_changed.connect(self._on_config_changed)
+        self._kernel_config.kernel_size_input.value_changed.connect(self._on_config_changed)
+        self._kernel_config._kernel_model.grid_changed.connect(self._on_config_changed)
+        self._kernel_config.constant_input.value_changed.connect(self._on_config_changed)
+        self._control_panel.category_changed.connect(self._on_config_changed)
+        self._control_panel.type_changed.connect(self._on_config_changed)
+        self._control_panel.filter_changed.connect(self._on_config_changed)
+        
         return self._control_panel
+    
+    def _on_config_changed(self, *args) -> None:
+        if self._coordinator.get_state() == ApplicationState.NAVIGATING:
+            self._coordinator.reset()
