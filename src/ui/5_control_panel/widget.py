@@ -6,120 +6,160 @@ from ui.common.dropdown import DropdownWidget
 
 
 class ControlPanelWidget(QWidget):
+    # Signal emitted when the grid size value changes, passes the new grid size as an integer
     grid_size_changed = Signal(int)
+    # Signal emitted when the input mode changes, passes the mode as a string
     input_mode_changed = Signal(str)
     
     def __init__(self, coordinator=None):
         super().__init__()
+        # Store reference to the application coordinator for navigation control
         self._coordinator = coordinator
         self._setup_ui()
         
+        # Connect to coordinator signals if coordinator is provided
         if self._coordinator:
+            # Update button visibility when application state changes
             self._coordinator.state_changed.connect(self._on_state_changed)
+            # Update button enabled/disabled states when position changes
             self._coordinator.position_changed.connect(self._on_position_changed)
     
     def _setup_ui(self):
+        # Create the main vertical layout for the control panel
         layout = QVBoxLayout(self)
         
+        # Create group box for grid configuration controls
         grid_group = QGroupBox("Grid Configuration")
         grid_layout = QVBoxLayout()
         
+        # Create number input widget for grid size control
         self.grid_size_input = NumberInputWidget(
             label="Grid Size:",
             default_value=DEFAULT_GRID_SIZE,
             min_value=MIN_GRID_SIZE,
             max_value=MAX_GRID_SIZE
         )
+        # Emit signal when grid size value changes
         self.grid_size_input.value_changed.connect(self.grid_size_changed.emit)
         grid_layout.addWidget(self.grid_size_input)
         
+        # Set the layout for the grid configuration group box
         grid_group.setLayout(grid_layout)
         
+        # Add the grid configuration group to the main layout
         layout.addWidget(grid_group)
         
+        # Create group box for input image configuration controls
         input_image_group = QGroupBox("Input Image Configuration")
         input_image_layout = QVBoxLayout()
         
+        # Create dropdown widget for selecting input mode (Toggle or Custom)
         self.input_mode_dropdown = DropdownWidget(
             label="Mode:",
             options=["Toggle", "Custom"],
             default_option="Toggle"
         )
+        # Emit signal when input mode selection changes
         self.input_mode_dropdown.value_changed.connect(self.input_mode_changed.emit)
         input_image_layout.addWidget(self.input_mode_dropdown)
         
+        # Set the layout for the input image configuration group box
         input_image_group.setLayout(input_image_layout)
         
+        # Add the input image configuration group to the main layout
         layout.addWidget(input_image_group)
         
+        # Create group box for navigation controls
         nav_group = QGroupBox("Navigation")
         nav_layout = QVBoxLayout()
         
+        # Create Start button to begin navigation
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self._on_start_clicked)
         nav_layout.addWidget(self.start_button)
         
+        # Create horizontal layout for Reset, Previous, and Next buttons
         nav_buttons_layout = QHBoxLayout()
         
+        # Create Reset button to return to initial state
         self.reset_button = QPushButton("Reset")
         self.reset_button.clicked.connect(self._on_reset_clicked)
         nav_buttons_layout.addWidget(self.reset_button)
         
+        # Create Previous button to navigate backwards
         self.previous_button = QPushButton("Previous")
         self.previous_button.clicked.connect(self._on_previous_clicked)
         nav_buttons_layout.addWidget(self.previous_button)
         
+        # Create Next button to navigate forwards
         self.next_button = QPushButton("Next")
         self.next_button.clicked.connect(self._on_next_clicked)
         nav_buttons_layout.addWidget(self.next_button)
         
+        # Add the navigation buttons layout to the navigation group layout
         nav_layout.addLayout(nav_buttons_layout)
         nav_group.setLayout(nav_layout)
         
+        # Add the navigation group to the main layout
         layout.addWidget(nav_group)
         
+        # Set initial button visibility based on application state
         self._update_button_visibility()
         
+        # Add stretchable space at the bottom to push controls to the top
         layout.addStretch()
     
     def _on_start_clicked(self) -> None:
+        # Start navigation when Start button is clicked
         if self._coordinator:
             self._coordinator.start()
     
     def _on_reset_clicked(self) -> None:
+        # Reset to initial state when Reset button is clicked
         if self._coordinator:
             self._coordinator.reset()
     
     def _on_previous_clicked(self) -> None:
+        # Navigate to previous position when Previous button is clicked
         if self._coordinator:
             self._coordinator.previous()
     
     def _on_next_clicked(self) -> None:
+        # Navigate to next position when Next button is clicked
         if self._coordinator:
             self._coordinator.next()
     
     def _on_state_changed(self, state) -> None:
-        self._update_button_visibility()
-        self._update_button_states()
+        # Update UI when application state changes
+        self._update_button_visibility()  # Show/hide buttons based on state
+        self._update_button_states()  # Enable/disable buttons based on navigation availability
     
     def _on_position_changed(self, row: int, col: int) -> None:
+        # Update button enabled/disabled states when position changes during navigation
         self._update_button_states()
     
     def _update_button_visibility(self) -> None:
+        # Show/hide navigation buttons based on current application state
         if not self._coordinator:
             return
         
         from core import ApplicationState
+        # Check if currently in INITIAL state
         is_initial = self._coordinator.get_state() == ApplicationState.INITIAL
         
+        # In INITIAL state: show Start button, hide navigation buttons
+        # In NAVIGATING state: hide Start button, show navigation buttons
         self.start_button.setVisible(is_initial)
         self.reset_button.setVisible(not is_initial)
         self.previous_button.setVisible(not is_initial)
         self.next_button.setVisible(not is_initial)
     
     def _update_button_states(self) -> None:
+        # Enable/disable Previous and Next buttons based on navigation boundaries
         if not self._coordinator:
             return
         
+        # Disable Previous button if at the start position
         self.previous_button.setEnabled(self._coordinator.can_go_previous())
+        # Disable Next button if at the end position
         self.next_button.setEnabled(self._coordinator.can_go_next())
