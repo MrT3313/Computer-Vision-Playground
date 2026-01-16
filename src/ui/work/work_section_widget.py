@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel, QScrollArea, QFrame
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QLabel, QSizePolicy
 from PySide6.QtCore import Qt
 
 from src.core.filter_calculator import ConvolutionResult, CrossCorrelationResult, MedianFilterResult
@@ -6,46 +6,40 @@ from src.core.filter_calculator import ConvolutionResult, CrossCorrelationResult
 
 class WorkSectionWidget(QWidget):
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, debug = False):
         super().__init__(parent)
+        self.debug = debug
         self.grid_labels = []
         self.setup_ui()
     
     def setup_ui(self):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        
-        self.content_widget = QWidget()
-        self.content_layout = QVBoxLayout(self.content_widget)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(0)
-        self.content_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.setSpacing(0)
         
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout(self.grid_container)
         self.grid_layout.setSpacing(2)
         self.grid_layout.setContentsMargins(10, 10, 10, 0)
-        self.content_layout.addWidget(self.grid_container)
+        layout.addWidget(self.grid_container)
         
         self.summary_label = QLabel("")
         self.summary_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.summary_label.setWordWrap(True)
-        self.summary_label.setStyleSheet("padding: 10px 10px 10px 10px; font-size: 12px;")
-        self.content_layout.addWidget(self.summary_label)
+        self.summary_label.setStyleSheet("padding: 10px 10px 0 10px; font-size: 12px;")
+        layout.addWidget(self.summary_label)
         
         self.no_data_label = QLabel("No calculation to display")
         self.no_data_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.no_data_label.setStyleSheet("padding: 20px; color: gray;")
-        self.content_layout.addWidget(self.no_data_label)
+        layout.addWidget(self.no_data_label)
         
-        scroll_area.setWidget(self.content_widget)
-        layout.addWidget(scroll_area)
-    
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        
+        if self.debug:
+            self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+            self.setObjectName("WorkSectionContent")
+            self.setStyleSheet("#WorkSectionContent { border: 2px solid red; background-color: transparent; }")
     
     def clear(self):
         self._clear_grid()
@@ -53,6 +47,7 @@ class WorkSectionWidget(QWidget):
         self.no_data_label.show()
         self.grid_container.hide()
         self.summary_label.hide()
+        self.updateGeometry()
     
     def _clear_grid(self):
         for label in self.grid_labels:
@@ -64,6 +59,7 @@ class WorkSectionWidget(QWidget):
         self.no_data_label.hide()
         self.grid_container.show()
         self.summary_label.show()
+        self.updateGeometry()
     
     def _add_header_label(self, text: str, row: int):
         header = QLabel(text)
@@ -182,10 +178,11 @@ class WorkSectionWidget(QWidget):
 <b>Median Filter:</b><br/>
 <b>Sorted values:</b> [{sorted_str}]<br/>
 <b>Median:</b> values[{median_idx}] = {result.median:.2f}<br/>
-<b>Result:</b> {result.median:.2f} × {constant:.2f} = {result.result:.2f}<br/>
+<b>Result:</b> {result.median:.2f} × {constant:.2f} = {result.result:.2f}
 </div>"""
         
         self.summary_label.setText(summary_text)
+        self.updateGeometry()
     
     def _set_mean_filter_summary_with_adjusted(self, adjusted_values: list, count: int, final_result: float):
         adjusted_str = " + ".join([f"{v:.2f}" for v in adjusted_values])
@@ -195,10 +192,11 @@ class WorkSectionWidget(QWidget):
         summary_text = f"""<div style='line-height: 1.8;'>
 <b>Sum:</b> {adjusted_str} = {total:.2f}<br/>
 <b>Mean:</b> {total:.2f} / {count} = {mean:.2f}<br/>
-<b>Result:</b> {mean:.2f}<br/>
+<b>Result:</b> {mean:.2f}
 </div>"""
         
         self.summary_label.setText(summary_text)
+        self.updateGeometry()
     
     def _set_linear_filter_summary(self, values: list, kernel: list, final_result: float, operation_name: str):
         constant = final_result / sum([v * k for v, k in zip(values, kernel)]) if sum([v * k for v, k in zip(values, kernel)]) != 0 else 1.0
@@ -208,7 +206,8 @@ class WorkSectionWidget(QWidget):
         
         summary_text = f"""<div style='line-height: 1.8;'>
 <b>Sum:</b> {adjusted_str} = {result_sum:.2f}<br/>
-<b>Result:</b> {result_sum:.2f}<br/>
+<b>Result:</b> {result_sum:.2f}
 </div>"""
         
         self.summary_label.setText(summary_text)
+        self.updateGeometry()

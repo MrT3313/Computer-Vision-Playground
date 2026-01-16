@@ -102,10 +102,9 @@ class MainWindow(QMainWindow):
         work_layout = QVBoxLayout()
         work_layout.setContentsMargins(0, 0, 0, 0)
         work_layout.setSpacing(0)
-        self.work_section = WorkSectionWidget()
+        self.work_section = WorkSectionWidget(debug=False)
         work_layout.addWidget(self.work_section)
         work_group.setLayout(work_layout)
-        work_group.setMaximumHeight(250)
         grid_layout.addWidget(work_group, 1, 0, 1, 3)
         
         grid_layout.setRowStretch(0, 1)
