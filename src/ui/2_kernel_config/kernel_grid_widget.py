@@ -1,7 +1,8 @@
-from PySide6.QtWidgets import QWidget, QInputDialog, QSizePolicy
+from PySide6.QtWidgets import QWidget, QSizePolicy
 from PySide6.QtCore import Qt, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
 from consts import DEFAULT_KERNEL_CELL_SIZE
+from ui.common import show_number_input_dialog
 
 
 class KernelGridWidget(QWidget):
@@ -67,14 +68,14 @@ class KernelGridWidget(QWidget):
             # Get the current value of the clicked cell
             current_value = self._model.get_value(row, col)
             # Show input dialog to allow user to edit the kernel value
-            new_value, ok = QInputDialog.getDouble(
+            new_value, ok = show_number_input_dialog(
                 self,
                 "Edit Kernel Value",
                 f"Enter value for cell ({row}, {col}):",
-                current_value, # Current value as default
-                -1000.0, # Minimum allowed value
-                1000.0, # Maximum allowed value
-                2 # Number of decimal places
+                current_value,
+                -1000.0,
+                1000.0,
+                2
             )
             
             # If user confirmed the dialog, update the cell value in the model

@@ -1,10 +1,11 @@
-from PySide6.QtWidgets import QWidget, QInputDialog
+from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent
+from .number_input_modal import show_number_input_dialog
 
 
 class PixelGridWidget(QWidget):
-    def __init__(self, model):
+    def __init__(self, model, editable=False):
         super().__init__()
 
         self._model = model
@@ -14,6 +15,7 @@ class PixelGridWidget(QWidget):
         self._bordered_cell = None
         self._border_color = QColor(255, 140, 0)
         self._border_width = 3
+        self._editable = editable
         self._edit_mode = "Toggle"
         self._is_dragging = False
         self._last_toggled_cell = None
@@ -22,11 +24,6 @@ class PixelGridWidget(QWidget):
         
         self.setMouseTracking(True)
         self.setMinimumSize(100, 100)
-
-        self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(self.backgroundRole(), QColor(255, 255, 255))
-        self.setPalette(palette)
     
     def _on_grid_changed(self, size: int, grid_data: list[list[int]]) -> None:
         self.update()
@@ -85,6 +82,9 @@ class PixelGridWidget(QWidget):
         return None
     
     def mousePressEvent(self, event: QMouseEvent):
+        if not self._editable:
+            return
+        
         cell = self._get_cell_from_position(event.pos().x(), event.pos().y())
         if cell is None:
             return
@@ -98,21 +98,21 @@ class PixelGridWidget(QWidget):
             new_value = 0 if current_value != 0 else 255
             self._model.set_cell(row, col, new_value)
         elif self._edit_mode == "Custom":
-            new_value, ok = QInputDialog.getInt(
+            new_value, ok = show_number_input_dialog(
                 self,
                 "Edit Pixel Value",
                 f"Enter value for cell ({row}, {col}):",
                 current_value,
-                0,
-                255,
-                1
+                0.0,
+                255.0,
+                0
             )
             
             if ok:
-                self._model.set_cell(row, col, new_value)
+                self._model.set_cell(row, col, int(new_value))
     
     def mouseMoveEvent(self, event: QMouseEvent):
-        if not self._is_dragging or self._edit_mode != "Toggle":
+        if not self._editable or not self._is_dragging or self._edit_mode != "Toggle":
             return
         
         if not (event.buttons() & Qt.MouseButton.LeftButton):
