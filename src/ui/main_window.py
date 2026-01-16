@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
-from core import ImageGridModel
-from consts import DEFAULT_GRID_SIZE
+from core import ImageGridModel, KernelApplicationCoordinator
+from consts import DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE
 
 class MainWindow(QMainWindow):
     """
@@ -16,14 +16,19 @@ class MainWindow(QMainWindow):
 
         super().__init__()
 
+        # Set the window title displayed in the title bar
         self.setWindowTitle("Computer Vision Playground")
+        # Set minimum window dimensions to ensure adequate space for all components
         self.setMinimumSize(1200, 800)
         
-        # Initialize input and output models with default grid size
+        # Create the input image model with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        # Create the output image model with default grid size
         self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        # Create the coordinator to manage kernel position and navigation state
+        self._coordinator = KernelApplicationCoordinator(DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE)
         
-        # Initialize and configure all UI components
+        # Set up the UI components and layout
         self._setup_ui()
     
     def _setup_ui(self):
@@ -38,8 +43,8 @@ class MainWindow(QMainWindow):
         
         # Create horizontal layout for main content organization
         main_layout = QHBoxLayout(central_widget)
-        main_layout.setSpacing(10)
-        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10) # Add 10px spacing between left and right sides
+        main_layout.setContentsMargins(10, 10, 10, 10) # Add 10px padding on all sides
         
         # Create the left side (image processing widgets) and right side (control panel)
         left_widget = self._create_left_side()
@@ -48,12 +53,12 @@ class MainWindow(QMainWindow):
         # Wrap left side in scroll area to handle vertical overflow when kernel grows
         left_scroll = QScrollArea()
         left_scroll.setWidget(left_widget)
-        left_scroll.setWidgetResizable(True)
-        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        left_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        left_scroll.setWidgetResizable(True) # Allow scroll area to resize its content
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff) # Never show horizontal scrollbar
+        left_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded) # Show vertical scrollbar when needed
+        left_scroll.setFrameShape(QScrollArea.Shape.NoFrame) # Remove scroll area border
         
-        # Add widgets to layout with stretch factors (left: 1, right: 0 = fixed width)
+        # Add widgets to layout with stretch factors (left: 1 = expandable, right: 0 = fixed width)
         main_layout.addWidget(left_scroll, 1)
         main_layout.addWidget(right_widget, 0)
     
@@ -85,29 +90,31 @@ class MainWindow(QMainWindow):
         # Create container widget with vertical layout for top/bottom sections
         left_widget = QWidget()
         left_layout = QVBoxLayout(left_widget)
-        left_layout.setSpacing(10) # space between widgets
-        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(10) # Add 10px spacing between top row and calculations
+        left_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         
         # Create top row container with horizontal layout
         top_row = QWidget()
         top_layout = QHBoxLayout(top_row)
-        top_layout.setSpacing(10) # space between widgets
-        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(10) # Add 10px spacing between widgets
+        top_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         
-        # Instantiate the three main image processing widgets
-        input_image = InputImageWidget(self._input_model)
-        kernel_config = KernelConfigWidget()
-        output_image = OutputImageWidget(self._output_model)
+        # Create input image widget with coordinator for position tracking
+        self._input_image = InputImageWidget(self._input_model, self._coordinator)
+        # Create kernel configuration widget
+        self._kernel_config = KernelConfigWidget()
+        # Create output image widget with coordinator for position tracking
+        output_image = OutputImageWidget(self._output_model, self._coordinator)
         
-        # Add widgets to top row (input and output stretch, kernel config fixed)
-        top_layout.addWidget(input_image, 1) # Stretch factor 1
-        top_layout.addWidget(kernel_config, 0) # Stretch factor 0 (fixed)
-        top_layout.addWidget(output_image, 1) # Stretch factor 1
+        # Add widgets to top row with stretch factors (input: 1, kernel: 0, output: 1)
+        top_layout.addWidget(self._input_image, 1)
+        top_layout.addWidget(self._kernel_config, 0)
+        top_layout.addWidget(output_image, 1)
         
         # Create filter calculations widget for detailed computation display
         filter_calculations = FilterCalculationsWidget()
         
-        # Add top row and calculations to left layout
+        # Add top row and calculations to left layout (top: 1, calculations: 0 = fixed height)
         left_layout.addWidget(top_row, 1)
         left_layout.addWidget(filter_calculations, 0)
         
@@ -125,15 +132,23 @@ class MainWindow(QMainWindow):
         import importlib
         control_panel_module = importlib.import_module('ui.5_control_panel')
         
-        # Create instance of the control panel widget
+        # Create instance of the imported control panel class
         ControlPanelWidget = control_panel_module.ControlPanelWidget
         
-        # Create control panel widget with fixed width
-        control_panel = ControlPanelWidget()
-        control_panel.setFixedWidth(300) # Fixed width of 300 pixels
+        # Create control panel with coordinator for navigation control
+        control_panel = ControlPanelWidget(self._coordinator)
+        # Set fixed width to prevent control panel from expanding
+        control_panel.setFixedWidth(300)
         
-        # Connect control panel's grid size changed signal to input and output model's set grid size method
+        # Connect grid size changes to update all models and coordinator
         control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
         control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
+        control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
+        
+        # Connect input mode changes to update input image editing behavior
+        control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
+        
+        # Connect kernel size changes to update coordinator's navigation boundaries
+        self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
         
         return control_panel
