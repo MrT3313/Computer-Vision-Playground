@@ -101,9 +101,14 @@ class KernelGridWidget(QWidget):
         border_pen.setWidth(1) # Set border line width to 1 pixel
         border_pen.setCosmetic(True) # Ensure border width remains constant regardless of transformations
         
-        # Configure colors for cell background and text
-        cell_bg_color = QColor(240, 240, 240)
-        text_color = QColor(50, 50, 50)
+        # Configure colors for cell background and text based on enabled state
+        if self.isEnabled():
+            cell_bg_color = QColor(240, 240, 240)
+            text_color = QColor(50, 50, 50)
+        else:
+            cell_bg_color = QColor(220, 220, 220)
+            text_color = QColor(150, 150, 150)
+        
         text_pen = QPen(text_color)
         
         # Set font for displaying kernel values

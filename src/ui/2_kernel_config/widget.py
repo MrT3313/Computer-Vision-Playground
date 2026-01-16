@@ -107,3 +107,13 @@ class KernelConfigWidget(QFrame):
     def _on_constant_changed(self, value: float) -> None:
         # Update the constant multiplier in the final kernel grid display
         self.final_kernel_grid.set_constant(value)
+    
+    def set_filter(self, filter_name: str) -> None:
+        if filter_name == "Mean":
+            self._kernel_model.set_all_values(1.0)
+            self.kernel_grid.setEnabled(False)
+            self.kernel_grid.setToolTip("Mean filter uses a fixed kernel with all values set to 1")
+            self.constant_input.set_value(1.0)
+        else:
+            self.kernel_grid.setEnabled(True)
+            self.kernel_grid.setToolTip("")

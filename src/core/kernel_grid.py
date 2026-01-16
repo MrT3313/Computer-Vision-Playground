@@ -32,3 +32,9 @@ class KernelGridModel(QObject):
         if 0 <= row < self._size and 0 <= col < self._size:
             return self._grid_data[row][col]
         return 0.0
+    
+    def set_all_values(self, value: float) -> None:
+        for row in range(self._size):
+            for col in range(self._size):
+                self._grid_data[row][col] = value
+        self.grid_changed.emit(self._size, self._grid_data)

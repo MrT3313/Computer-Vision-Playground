@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
-from core import ImageGridModel, KernelApplicationCoordinator
+from core import ImageGridModel, KernelApplicationCoordinator, ApplicationState
 from consts import DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE
 
 class MainWindow(QMainWindow):
@@ -23,8 +23,8 @@ class MainWindow(QMainWindow):
         
         # Create the input image model with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
-        # Create the output image model with default grid size
-        self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        # Create the output image model with default grid size, starting with None values
+        self._output_model = ImageGridModel(DEFAULT_GRID_SIZE, initial_value=None)
         # Create the coordinator to manage kernel position and navigation state
         self._coordinator = KernelApplicationCoordinator(DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE)
         
@@ -112,11 +112,16 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self._output_image, 1)
         
         # Create filter calculations widget for detailed computation display
-        filter_calculations = FilterCalculationsWidget()
+        self._filter_calculations = FilterCalculationsWidget(
+            self._input_model,
+            self._kernel_config._kernel_model,
+            self._coordinator,
+            self._output_model
+        )
         
         # Add top row and calculations to left layout (top: 1, calculations: 0 = fixed height)
         left_layout.addWidget(top_row, 1)
-        left_layout.addWidget(filter_calculations, 0)
+        left_layout.addWidget(self._filter_calculations, 0)
         
         return left_widget
     
@@ -158,4 +163,35 @@ class MainWindow(QMainWindow):
         
         self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
         
+        # Connect filter changes to kernel config and filter calculations
+        self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
+        self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
+        
+        # Connect coordinator state and position changes to filter calculations
+        self._coordinator.state_changed.connect(self._filter_calculations.on_state_changed)
+        self._coordinator.position_changed.connect(self._filter_calculations.update_calculation)
+        
+        # Connect kernel changes to filter calculations
+        self._kernel_config._kernel_model.grid_changed.connect(self._filter_calculations.on_kernel_changed)
+        
+        # Connect constant changes to filter calculations
+        self._kernel_config.constant_input.value_changed.connect(self._filter_calculations.set_constant)
+        
+        # Auto-reset to INITIAL state when any configuration changes
+        self._input_model.grid_changed.connect(self._on_config_changed)
+        self._kernel_config.kernel_size_input.value_changed.connect(self._on_config_changed)
+        self._kernel_config._kernel_model.grid_changed.connect(self._on_config_changed)
+        self._kernel_config.constant_input.value_changed.connect(self._on_config_changed)
+        self._control_panel.category_changed.connect(self._on_config_changed)
+        self._control_panel.type_changed.connect(self._on_config_changed)
+        self._control_panel.filter_changed.connect(self._on_config_changed)
+        
+        # Initialize kernel config with current filter state now that connections are established
+        current_filter = self._control_panel.filter_dropdown.combobox.currentText()
+        self._kernel_config.set_filter(current_filter)
+        
         return self._control_panel
+    
+    def _on_config_changed(self, *args) -> None:
+        if self._coordinator.get_state() == ApplicationState.NAVIGATING:
+            self._coordinator.reset()
