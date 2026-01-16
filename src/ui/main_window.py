@@ -1,5 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout
 from PySide6.QtCore import Qt
+from core import ImageGridModel
+from consts import DEFAULT_GRID_SIZE
 
 class MainWindow(QMainWindow):
     """
@@ -16,6 +18,9 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Computer Vision Playground")
         self.setMinimumSize(1200, 800)
+        
+        self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
         
         # Initialize and configure all UI components
         self._setup_ui()
@@ -81,9 +86,9 @@ class MainWindow(QMainWindow):
         top_layout.setContentsMargins(0, 0, 0, 0)
         
         # Instantiate the three main image processing widgets
-        input_image = InputImageWidget()
+        input_image = InputImageWidget(self._input_model)
         kernel_config = KernelConfigWidget()
-        output_image = OutputImageWidget()
+        output_image = OutputImageWidget(self._output_model)
         
         # Fix kernel config width to prevent it from stretching
         kernel_config.setFixedWidth(150)
@@ -120,5 +125,8 @@ class MainWindow(QMainWindow):
         # Create control panel widget with fixed width
         control_panel = ControlPanelWidget()
         control_panel.setFixedWidth(300) # Fixed width of 300 pixels
+        
+        control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
+        control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
         
         return control_panel
