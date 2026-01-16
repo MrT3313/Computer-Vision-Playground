@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel, QSizePolicy
 from PySide6.QtCore import Qt
 
 from core.kernel_grid import KernelGridModel
@@ -44,6 +44,7 @@ class KernelConfigWidget(QFrame):
         content_layout.setSpacing(10)
         
         kernel_size_group = QGroupBox()
+        kernel_size_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         kernel_size_group_layout = QVBoxLayout()
         self.kernel_size_input = NumberInputWidget(
             label="Kernel Size (k):",
@@ -60,6 +61,7 @@ class KernelConfigWidget(QFrame):
         content_layout.addWidget(self.kernel_grid, alignment=Qt.AlignmentFlag.AlignCenter)
         
         constant_group = QGroupBox()
+        constant_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         constant_group_layout = QVBoxLayout()
         self.constant_input = NumberInputWidget(
             label="Constant:",
