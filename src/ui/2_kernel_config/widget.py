@@ -1,9 +1,10 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QDoubleSpinBox, QGroupBox, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel
 from PySide6.QtCore import Qt
 
 from core.kernel_grid import KernelGridModel
 from ui.common.kernel_grid_widget import KernelGridWidget
 from ui.common.final_kernel_grid_widget import FinalKernelGridWidget
+from ui.common.number_input import NumberInputWidget
 from consts import (
     DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
     DEFAULT_CONSTANT_MULTIPLIER, MIN_CONSTANT_MULTIPLIER, MAX_CONSTANT_MULTIPLIER,
@@ -44,15 +45,14 @@ class KernelConfigWidget(QFrame):
         
         kernel_size_group = QGroupBox()
         kernel_size_group_layout = QVBoxLayout()
-        kernel_size_layout = QHBoxLayout()
-        kernel_size_layout.addWidget(QLabel("Kernel Size (k):"))
-        self.kernel_size_spin = QSpinBox()
-        self.kernel_size_spin.setMinimum(MIN_KERNEL_SIZE)
-        self.kernel_size_spin.setMaximum(MAX_KERNEL_SIZE)
-        self.kernel_size_spin.setValue(DEFAULT_KERNEL_SIZE)
-        self.kernel_size_spin.valueChanged.connect(self._on_kernel_size_changed)
-        kernel_size_layout.addWidget(self.kernel_size_spin)
-        kernel_size_group_layout.addLayout(kernel_size_layout)
+        self.kernel_size_input = NumberInputWidget(
+            label="Kernel Size (k):",
+            default_value=DEFAULT_KERNEL_SIZE,
+            min_value=MIN_KERNEL_SIZE,
+            max_value=MAX_KERNEL_SIZE
+        )
+        self.kernel_size_input.value_changed.connect(self._on_kernel_size_changed)
+        kernel_size_group_layout.addWidget(self.kernel_size_input)
         kernel_size_group.setLayout(kernel_size_group_layout)
         content_layout.addWidget(kernel_size_group)
         
@@ -61,17 +61,16 @@ class KernelConfigWidget(QFrame):
         
         constant_group = QGroupBox()
         constant_group_layout = QVBoxLayout()
-        constant_layout = QHBoxLayout()
-        constant_layout.addWidget(QLabel("Constant:"))
-        self.constant_spin = QDoubleSpinBox()
-        self.constant_spin.setMinimum(MIN_CONSTANT_MULTIPLIER)
-        self.constant_spin.setMaximum(MAX_CONSTANT_MULTIPLIER)
-        self.constant_spin.setValue(DEFAULT_CONSTANT_MULTIPLIER)
-        self.constant_spin.setSingleStep(CONSTANT_MULTIPLIER_STEP)
-        self.constant_spin.setDecimals(CONSTANT_MULTIPLIER_DECIMALS)
-        self.constant_spin.valueChanged.connect(self._on_constant_changed)
-        constant_layout.addWidget(self.constant_spin)
-        constant_group_layout.addLayout(constant_layout)
+        self.constant_input = NumberInputWidget(
+            label="Constant:",
+            default_value=DEFAULT_CONSTANT_MULTIPLIER,
+            min_value=MIN_CONSTANT_MULTIPLIER,
+            max_value=MAX_CONSTANT_MULTIPLIER,
+            step=CONSTANT_MULTIPLIER_STEP,
+            decimals=CONSTANT_MULTIPLIER_DECIMALS
+        )
+        self.constant_input.value_changed.connect(self._on_constant_changed)
+        constant_group_layout.addWidget(self.constant_input)
         constant_group.setLayout(constant_group_layout)
         content_layout.addWidget(constant_group)
         
