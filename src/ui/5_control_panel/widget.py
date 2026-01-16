@@ -20,6 +20,7 @@ class ControlPanelWidget(QWidget):
         grid_group = QGroupBox("Grid Configuration")
         grid_layout = QVBoxLayout()
         
+        # Create number input widget for grid size
         self.grid_size_input = NumberInputWidget(
             label="Grid Size:",
             default_value=DEFAULT_GRID_SIZE,
