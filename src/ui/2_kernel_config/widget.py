@@ -13,7 +13,7 @@ from consts import (
 class KernelConfigWidget(QFrame):
     def __init__(self):
         super().__init__()
-        self._kernel_model = KernelGridModel(DEFAULT_KERNEL_SIZE)
+        self._kernel_model = KernelGridModel(2 * DEFAULT_KERNEL_SIZE + 1)
         self._setup_ui()
     
     def _setup_ui(self):
@@ -63,7 +63,7 @@ class KernelConfigWidget(QFrame):
         constant_group = QGroupBox()
         constant_group_layout = QVBoxLayout()
         constant_layout = QHBoxLayout()
-        constant_layout.addWidget(QLabel("Constant Multiplier:"))
+        constant_layout.addWidget(QLabel("Constant:"))
         self.constant_spin = QDoubleSpinBox()
         self.constant_spin.setMinimum(MIN_CONSTANT_MULTIPLIER)
         self.constant_spin.setMaximum(MAX_CONSTANT_MULTIPLIER)
@@ -84,8 +84,9 @@ class KernelConfigWidget(QFrame):
         main_layout.addWidget(title_bar)
         main_layout.addWidget(content_area, 1)
     
-    def _on_kernel_size_changed(self, size: int) -> None:
-        self._kernel_model.set_grid_size(size)
+    def _on_kernel_size_changed(self, k: int) -> None:
+        grid_size = 2 * k + 1
+        self._kernel_model.set_grid_size(grid_size)
     
     def _on_constant_changed(self, value: float) -> None:
         self.final_kernel_grid.set_constant(value)
