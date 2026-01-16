@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Signal
 from consts import DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE
 from ui.common.number_input import NumberInputWidget
@@ -10,6 +10,10 @@ class ControlPanelWidget(QWidget):
     grid_size_changed = Signal(int)
     # Signal emitted when the input mode changes, passes the mode as a string
     input_mode_changed = Signal(str)
+    # Signal emitted when the show pixel values checkbox state changes, passes the new state as a boolean
+    show_pixel_values_changed = Signal(bool)
+    # Signal emitted when the show colors checkbox state changes, passes the new state as a boolean
+    show_colors_changed = Signal(bool)
     
     def __init__(self, coordinator=None):
         super().__init__()
@@ -42,6 +46,18 @@ class ControlPanelWidget(QWidget):
         # Emit signal when grid size value changes
         self.grid_size_input.value_changed.connect(self.grid_size_changed.emit)
         grid_layout.addWidget(self.grid_size_input)
+        
+        # Create checkbox for showing pixel values
+        self.show_pixel_values_checkbox = QCheckBox("Show Pixel Values")
+        self.show_pixel_values_checkbox.setChecked(True)
+        self.show_pixel_values_checkbox.stateChanged.connect(self._on_show_pixel_values_changed)
+        grid_layout.addWidget(self.show_pixel_values_checkbox)
+        
+        # Create checkbox for showing colors
+        self.show_colors_checkbox = QCheckBox("Show Colors")
+        self.show_colors_checkbox.setChecked(True)
+        self.show_colors_checkbox.stateChanged.connect(self._on_show_colors_changed)
+        grid_layout.addWidget(self.show_colors_checkbox)
         
         # Set the layout for the grid configuration group box
         grid_group.setLayout(grid_layout)
@@ -128,6 +144,20 @@ class ControlPanelWidget(QWidget):
         # Navigate to next position when Next button is clicked
         if self._coordinator:
             self._coordinator.next()
+    
+    def _on_show_pixel_values_changed(self, state: int) -> None:
+        # Show or hide the pixel values in the pixel grid
+        is_checked = state == 2
+        if not is_checked and not self.show_colors_checkbox.isChecked():
+            self.show_colors_checkbox.setChecked(True)
+        self.show_pixel_values_changed.emit(is_checked)
+    
+    def _on_show_colors_changed(self, state: int) -> None:
+        # Show or hide the colors in the pixel grid
+        is_checked = state == 2
+        if not is_checked and not self.show_pixel_values_checkbox.isChecked():
+            self.show_pixel_values_checkbox.setChecked(True)
+        self.show_colors_changed.emit(is_checked)
     
     def _on_state_changed(self, state) -> None:
         # Update UI when application state changes

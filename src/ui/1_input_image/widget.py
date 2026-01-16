@@ -96,3 +96,13 @@ class InputImageWidget(QFrame):
         # Change the pixel grid editing mode (e.g., "paint", "erase", "select")
         if self._pixel_grid:
             self._pixel_grid.set_edit_mode(mode)
+    
+    def set_show_pixel_values(self, show: bool) -> None:
+        # Show or hide the pixel values in the pixel grid
+        if self._pixel_grid:
+            self._pixel_grid.set_show_pixel_values(show)
+    
+    def set_show_colors(self, show: bool) -> None:
+        # Show or hide the colors in the pixel grid
+        if self._pixel_grid:
+            self._pixel_grid.set_show_colors(show)
