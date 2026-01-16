@@ -7,23 +7,42 @@ class PixelGridWidget(QWidget):
     def __init__(self, model):
         super().__init__()
 
-        # Store reference to the data model that contains the grid state
         self._model = model
+        self._highlighted_cells = []
+        self._highlight_color = QColor(100, 150, 255, 100)
+        self._bordered_cell = None
+        self._border_color = QColor(255, 140, 0)
+        self._border_width = 3
 
-        # Connect to model's signal to update display when grid data changes
         self._model.grid_changed.connect(self._on_grid_changed)
         
-        # Set minimum widget size to ensure visibility
         self.setMinimumSize(100, 100)
 
-        # Configure white background for the widget
         self.setAutoFillBackground(True)
         palette = self.palette()
         palette.setColor(self.backgroundRole(), QColor(255, 255, 255))
         self.setPalette(palette)
     
     def _on_grid_changed(self, size: int, grid_data: list[list[int]]) -> None:
-        # Force widget to repaint when grid data changes
+        self.update()
+    
+    def set_highlighted_cells(self, cells: list[tuple[int, int]], color: QColor = None) -> None:
+        self._highlighted_cells = cells
+        if color:
+            self._highlight_color = color
+        self.update()
+    
+    def set_bordered_cell(self, cell: tuple[int, int] | None, color: QColor = None, width: int = None) -> None:
+        self._bordered_cell = cell
+        if color:
+            self._border_color = color
+        if width:
+            self._border_width = width
+        self.update()
+    
+    def clear_highlights(self) -> None:
+        self._highlighted_cells = []
+        self._bordered_cell = None
         self.update()
     
     def paintEvent(self, event):
@@ -57,20 +76,30 @@ class PixelGridWidget(QWidget):
         border_pen.setWidth(1) # Set border line width to 1 pixel
         border_pen.setCosmetic(True) # Ensure border width remains constant regardless of transformations
         
-        # Iterate through each cell in the grid
         for row in range(grid_size):
             for col in range(grid_size):
-                # Calculate pixel position for current cell
                 x = offset_x + col * cell_size
                 y = offset_y + row * cell_size
                 
-                # Get cell value (0-255) and create grayscale color
                 cell_value = grid_data[row][col]
                 cell_color = QColor(cell_value, cell_value, cell_value)
                 
-                # Fill the cell with its color
                 painter.fillRect(x, y, cell_size, cell_size, cell_color)
                 
-                # Draw the cell border
+                if (row, col) in self._highlighted_cells:
+                    painter.fillRect(x, y, cell_size, cell_size, self._highlight_color)
+                
+                painter.setPen(border_pen)
+                painter.drawRect(x, y, cell_size, cell_size)
+        
+        if self._bordered_cell is not None:
+            row, col = self._bordered_cell
+            if 0 <= row < grid_size and 0 <= col < grid_size:
+                x = offset_x + col * cell_size
+                y = offset_y + row * cell_size
+                
+                border_pen = QPen(self._border_color)
+                border_pen.setWidth(self._border_width)
+                border_pen.setCosmetic(True)
                 painter.setPen(border_pen)
                 painter.drawRect(x, y, cell_size, cell_size)

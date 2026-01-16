@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
-from core import ImageGridModel
-from consts import DEFAULT_GRID_SIZE
+from core import ImageGridModel, KernelApplicationCoordinator
+from consts import DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE
 
 class MainWindow(QMainWindow):
     """
@@ -19,11 +19,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Computer Vision Playground")
         self.setMinimumSize(1200, 800)
         
-        # Initialize input and output models with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
         self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        self._coordinator = KernelApplicationCoordinator(DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE)
         
-        # Initialize and configure all UI components
         self._setup_ui()
     
     def _setup_ui(self):
@@ -94,15 +93,13 @@ class MainWindow(QMainWindow):
         top_layout.setSpacing(10) # space between widgets
         top_layout.setContentsMargins(0, 0, 0, 0)
         
-        # Instantiate the three main image processing widgets
-        input_image = InputImageWidget(self._input_model)
-        kernel_config = KernelConfigWidget()
-        output_image = OutputImageWidget(self._output_model)
+        input_image = InputImageWidget(self._input_model, self._coordinator)
+        self._kernel_config = KernelConfigWidget()
+        output_image = OutputImageWidget(self._output_model, self._coordinator)
         
-        # Add widgets to top row (input and output stretch, kernel config fixed)
-        top_layout.addWidget(input_image, 1) # Stretch factor 1
-        top_layout.addWidget(kernel_config, 0) # Stretch factor 0 (fixed)
-        top_layout.addWidget(output_image, 1) # Stretch factor 1
+        top_layout.addWidget(input_image, 1)
+        top_layout.addWidget(self._kernel_config, 0)
+        top_layout.addWidget(output_image, 1)
         
         # Create filter calculations widget for detailed computation display
         filter_calculations = FilterCalculationsWidget()
@@ -125,15 +122,15 @@ class MainWindow(QMainWindow):
         import importlib
         control_panel_module = importlib.import_module('ui.5_control_panel')
         
-        # Create instance of the control panel widget
         ControlPanelWidget = control_panel_module.ControlPanelWidget
         
-        # Create control panel widget with fixed width
-        control_panel = ControlPanelWidget()
-        control_panel.setFixedWidth(300) # Fixed width of 300 pixels
+        control_panel = ControlPanelWidget(self._coordinator)
+        control_panel.setFixedWidth(300)
         
-        # Connect control panel's grid size changed signal to input and output model's set grid size method
         control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
         control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
+        control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
+        
+        self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
         
         return control_panel

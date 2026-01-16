@@ -3,10 +3,17 @@ from PySide6.QtCore import Qt
 from ui.common import PixelGridWidget
 
 class OutputImageWidget(QFrame):
-    def __init__(self, model):
+    def __init__(self, model, coordinator=None):
         super().__init__()
         self._model = model
+        self._coordinator = coordinator
+        self._pixel_grid = None
         self._setup_ui()
+        
+        if self._coordinator:
+            self._coordinator.position_changed.connect(self._on_position_changed)
+            self._coordinator.state_changed.connect(self._on_state_changed)
+            self._update_initial_display()
     
     def _setup_ui(self):
         # Configure the frame's visual appearance with a box border
@@ -37,9 +44,26 @@ class OutputImageWidget(QFrame):
         # Add the title label to the title bar layout
         title_layout.addWidget(title_label)
         
-        # Create the pixel grid widget that will display the grid
-        pixel_grid = PixelGridWidget(self._model)
+        self._pixel_grid = PixelGridWidget(self._model)
         
-        # Add both the title bar and pixel grid to the main layout
-        main_layout.addWidget(title_bar) # Title bar at the top
-        main_layout.addWidget(pixel_grid, 1) # Pixel grid below with stretch factor 1
+        main_layout.addWidget(title_bar)
+        main_layout.addWidget(self._pixel_grid, 1)
+    
+    def _on_position_changed(self, row: int, col: int) -> None:
+        if self._coordinator and self._pixel_grid:
+            output_cell = self._coordinator.get_output_cell()
+            self._pixel_grid.set_bordered_cell(output_cell)
+    
+    def _on_state_changed(self, state) -> None:
+        if self._pixel_grid:
+            if state.value == "initial":
+                if self._coordinator:
+                    output_cell = self._coordinator.get_output_cell()
+                    self._pixel_grid.set_bordered_cell(output_cell)
+            else:
+                pass
+    
+    def _update_initial_display(self) -> None:
+        if self._coordinator and self._pixel_grid:
+            output_cell = self._coordinator.get_output_cell()
+            self._pixel_grid.set_bordered_cell(output_cell)
