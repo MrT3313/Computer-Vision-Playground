@@ -234,10 +234,13 @@ class PixelGridWidget(QWidget):
                 # Get cell value (0-255) and create grayscale color
                 cell_value = grid_data[row][col]
                 
-                if self._show_colors:
-                    cell_color = QColor(cell_value, cell_value, cell_value)
-                else:
+                if cell_value is None:
                     cell_color = QColor(255, 255, 255)
+                else:
+                    if self._show_colors:
+                        cell_color = QColor(cell_value, cell_value, cell_value)
+                    else:
+                        cell_color = QColor(255, 255, 255)
                 
                 # Fill the cell with its color
                 painter.fillRect(x, y, cell_size, cell_size, cell_color)
@@ -246,7 +249,7 @@ class PixelGridWidget(QWidget):
                 painter.setPen(border_pen)
                 painter.drawRect(x, y, cell_size, cell_size)
                 
-                if self._show_pixel_values:
+                if self._show_pixel_values and cell_value is not None:
                     if self._show_colors:
                         text_color = QColor(0, 0, 0) if cell_value > 127 else QColor(255, 255, 255)
                     else:

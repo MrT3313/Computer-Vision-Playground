@@ -75,8 +75,9 @@ class OutputImageWidget(QFrame):
     def _on_state_changed(self, state) -> None:
         # Update display when the application state changes
         if self._pixel_grid:
-            # If returning to initial state, show the initial output position
+            # If returning to initial state, clear the output grid and show the initial output position
             if state.value == "initial":
+                self._model.clear_grid()
                 if self._coordinator:
                     output_cell = self._coordinator.get_output_cell()
                     self._pixel_grid.set_bordered_cell(output_cell)

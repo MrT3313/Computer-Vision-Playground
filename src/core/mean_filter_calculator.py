@@ -27,6 +27,8 @@ class MeanFilterCalculator:
             final_kernel_value = kernel_value * constant
             result = input_value * final_kernel_value
             
+            bounded_result = max(0, min(255, result))
+            
             calculations.append({
                 'index': idx,
                 'coordinate': (row, col),
@@ -35,10 +37,11 @@ class MeanFilterCalculator:
                 'constant': constant,
                 'final_kernel_value': final_kernel_value,
                 'calculation': f"({input_value}×{final_kernel_value:.2f})",
-                'result': result
+                'result': result,
+                'bounded_result': bounded_result
             })
             
-            total_sum += result
+            total_sum += bounded_result
         
         kernel_area = kernel_size * kernel_size
         final_output = total_sum / kernel_area

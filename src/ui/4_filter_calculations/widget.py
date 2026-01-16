@@ -6,11 +6,12 @@ from .calculation_table_widget import CalculationTableWidget
 
 
 class FilterCalculationsWidget(QFrame):
-    def __init__(self, input_model, kernel_model, coordinator):
+    def __init__(self, input_model, kernel_model, coordinator, output_model):
         super().__init__()
         self._input_model = input_model
         self._kernel_model = kernel_model
         self._coordinator = coordinator
+        self._output_model = output_model
         self._filter_type = "Mean"
         self._constant = 1.0
         
@@ -60,8 +61,8 @@ class FilterCalculationsWidget(QFrame):
         self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self._scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
-        self._scroll_area.setMinimumHeight(170)
-        self._scroll_area.setMaximumHeight(170)
+        self._scroll_area.setMinimumHeight(200)
+        self._scroll_area.setMaximumHeight(200)
         
         self._table_widget = CalculationTableWidget()
         self._scroll_area.setWidget(self._table_widget)
@@ -121,10 +122,14 @@ class FilterCalculationsWidget(QFrame):
         self._table_widget.set_calculations(result['calculations'])
         
         calculations = result['calculations']
-        sum_parts = " + ".join([f"{c['result']:.2f}" for c in calculations])
+        sum_parts = " + ".join([f"{c['bounded_result']:.2f}" for c in calculations])
         sum_text = f"Sum: {sum_parts} = {result['total_sum']:.2f}"
         mean_text = f"Mean: {result['total_sum']:.2f} / {result['kernel_area']} = {result['output']:.2f}"
         result_text = f"Result: {result['output']:.2f}"
         
         full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
         self._result_label.setText(full_text)
+        
+        output_cell = result['output_cell']
+        output_value = max(0, min(255, round(result['output'])))
+        self._output_model.set_cell(output_cell[0], output_cell[1], output_value)

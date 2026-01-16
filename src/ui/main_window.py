@@ -23,8 +23,8 @@ class MainWindow(QMainWindow):
         
         # Create the input image model with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
-        # Create the output image model with default grid size
-        self._output_model = ImageGridModel(DEFAULT_GRID_SIZE)
+        # Create the output image model with default grid size, starting with None values
+        self._output_model = ImageGridModel(DEFAULT_GRID_SIZE, initial_value=None)
         # Create the coordinator to manage kernel position and navigation state
         self._coordinator = KernelApplicationCoordinator(DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE)
         
@@ -115,7 +115,8 @@ class MainWindow(QMainWindow):
         self._filter_calculations = FilterCalculationsWidget(
             self._input_model,
             self._kernel_config._kernel_model,
-            self._coordinator
+            self._coordinator,
+            self._output_model
         )
         
         # Add top row and calculations to left layout (top: 1, calculations: 0 = fixed height)

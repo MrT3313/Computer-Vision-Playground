@@ -10,7 +10,7 @@ class CalculationTableWidget(QWidget):
         self._label_width = 0
         self._cell_widths = []
         self._cell_height = 30
-        self._row_count = 5
+        self._row_count = 6
     
     def set_calculations(self, calculations: list) -> None:
         self._calculations = calculations
@@ -32,7 +32,8 @@ class CalculationTableWidget(QWidget):
             "Coordinates:",
             "Values:",
             "Kernel Adjusted Calculations:",
-            "Kernel Adjusted Values:"
+            "Kernel Adjusted Values:",
+            "Bounded Values:"
         ]
         
         bold_metrics = QFontMetrics(bold_font)
@@ -55,7 +56,8 @@ class CalculationTableWidget(QWidget):
                 f"({calc['coordinate'][0]},{calc['coordinate'][1]})",
                 str(calc['input_value']),
                 f"({calc['input_value']}×{calc['final_kernel_value']:.2f})",
-                f"{calc['result']:.2f}"
+                f"{calc['result']:.2f}",
+                f"{calc['bounded_result']:.2f}"
             ]
             
             for text in texts:
@@ -99,7 +101,8 @@ class CalculationTableWidget(QWidget):
             "Coordinates:",
             "Values:",
             "Kernel Adjusted Calculations:",
-            "Kernel Adjusted Values:"
+            "Kernel Adjusted Values:",
+            "Bounded Values:"
         ]
         
         for row_idx in range(self._row_count):
@@ -133,8 +136,10 @@ class CalculationTableWidget(QWidget):
                     text = str(calc['input_value'])
                 elif row_idx == 3:
                     text = f"({calc['input_value']}×{calc['final_kernel_value']:.2f})"
-                else:
+                elif row_idx == 4:
                     text = f"{calc['result']:.2f}"
+                else:
+                    text = f"{calc['bounded_result']:.2f}"
                 
                 painter.drawText(x_offset, y, cell_width, self._cell_height,
                                Qt.AlignmentFlag.AlignCenter, text)
