@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel, Q
 from PySide6.QtCore import Qt
 
 from core.kernel_grid import KernelGridModel
-from ui.common.kernel_grid_widget import KernelGridWidget
-from ui.common.final_kernel_grid_widget import FinalKernelGridWidget
+from .kernel_grid_widget import KernelGridWidget
+from .final_kernel_grid_widget import FinalKernelGridWidget
 from ui.common.number_input import NumberInputWidget
 from consts import (
     DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
