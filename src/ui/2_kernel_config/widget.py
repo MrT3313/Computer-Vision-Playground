@@ -1,17 +1,27 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel, QSizePolicy
 from PySide6.QtCore import Qt
+
+from core.kernel_grid import KernelGridModel
+from .kernel_grid_widget import KernelGridWidget
+from .final_kernel_grid_widget import FinalKernelGridWidget
+from ui.common.number_input import NumberInputWidget
+from consts import (
+    DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
+    DEFAULT_CONSTANT_MULTIPLIER, MIN_CONSTANT_MULTIPLIER, MAX_CONSTANT_MULTIPLIER,
+    CONSTANT_MULTIPLIER_STEP, CONSTANT_MULTIPLIER_DECIMALS
+)
 
 class KernelConfigWidget(QFrame):
     def __init__(self):
         super().__init__()
+        # Initialize the kernel grid model with default size (2k+1 where k is the kernel radius)
+        self._kernel_model = KernelGridModel(2 * DEFAULT_KERNEL_SIZE + 1)
         self._setup_ui()
     
     def _setup_ui(self):
         # Configure the frame's visual appearance with a box border
         self.setFrameShape(QFrame.Shape.Box)
         self.setLineWidth(2) # Set border thickness to 2 pixels
-        self.setStyleSheet("background-color: grey;") # Set background color
-        self.setMinimumHeight(200) # Ensure minimum height of 200 pixels
         
         # Create the main vertical layout that will contain all child widgets
         main_layout = QVBoxLayout(self)
@@ -35,10 +45,65 @@ class KernelConfigWidget(QFrame):
         # Add the title label to the title bar layout
         title_layout.addWidget(title_label)
         
-        # Create the content area frame that will hold the main panel content
-        content_area = QFrame()
-        content_area.setStyleSheet("background: transparent; border: none;")
+        # Create the content area widget that will hold all kernel configuration controls
+        content_area = QWidget()
+        content_layout = QVBoxLayout(content_area)
+        content_layout.setContentsMargins(10, 10, 10, 10) # Add 10px padding on all sides
+        content_layout.setSpacing(10) # Add 10px spacing between widgets
+        
+        # Create group box for kernel size configuration
+        kernel_size_group = QGroupBox()
+        kernel_size_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        kernel_size_group_layout = QVBoxLayout()
+        # Create number input widget for kernel size (k) parameter
+        self.kernel_size_input = NumberInputWidget(
+            label="Kernel Size (k):",
+            default_value=DEFAULT_KERNEL_SIZE,
+            min_value=MIN_KERNEL_SIZE,
+            max_value=MAX_KERNEL_SIZE
+        )
+        # Connect value changes to handler that updates the kernel grid size
+        self.kernel_size_input.value_changed.connect(self._on_kernel_size_changed)
+        kernel_size_group_layout.addWidget(self.kernel_size_input)
+        kernel_size_group.setLayout(kernel_size_group_layout)
+        content_layout.addWidget(kernel_size_group)
+        
+        # Create the editable kernel grid widget where users can click to modify values
+        self.kernel_grid = KernelGridWidget(self._kernel_model)
+        content_layout.addWidget(self.kernel_grid, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # Create group box for constant multiplier configuration
+        constant_group = QGroupBox()
+        constant_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        constant_group_layout = QVBoxLayout()
+        # Create number input widget for constant multiplier with decimal precision
+        self.constant_input = NumberInputWidget(
+            label="Constant:",
+            default_value=DEFAULT_CONSTANT_MULTIPLIER,
+            min_value=MIN_CONSTANT_MULTIPLIER,
+            max_value=MAX_CONSTANT_MULTIPLIER,
+            step=CONSTANT_MULTIPLIER_STEP,
+            decimals=CONSTANT_MULTIPLIER_DECIMALS
+        )
+        # Connect value changes to handler that updates the final kernel display
+        self.constant_input.value_changed.connect(self._on_constant_changed)
+        constant_group_layout.addWidget(self.constant_input)
+        constant_group.setLayout(constant_group_layout)
+        content_layout.addWidget(constant_group)
+        
+        # Create the final kernel grid widget that displays kernel values multiplied by constant
+        self.final_kernel_grid = FinalKernelGridWidget(self._kernel_model, DEFAULT_CONSTANT_MULTIPLIER)
+        content_layout.addWidget(self.final_kernel_grid, alignment=Qt.AlignmentFlag.AlignCenter)
         
         # Add both the title bar and content area to the main layout
         main_layout.addWidget(title_bar) # Title bar at the top
         main_layout.addWidget(content_area, 1) # Content area below with stretch factor 1
+    
+    def _on_kernel_size_changed(self, k: int) -> None:
+        # Convert kernel radius (k) to full grid size (2k+1) and update the model
+        grid_size = 2 * k + 1
+        self._kernel_model.set_grid_size(grid_size)
+    
+    def _on_constant_changed(self, value: float) -> None:
+        # Update the constant multiplier in the final kernel grid display
+        self.final_kernel_grid.set_constant(value)

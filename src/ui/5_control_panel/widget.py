@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, QGroupBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox
 from PySide6.QtCore import Signal
 from consts import DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE
+from ui.common.number_input import NumberInputWidget
 
 
 class ControlPanelWidget(QWidget):
@@ -19,20 +20,15 @@ class ControlPanelWidget(QWidget):
         grid_group = QGroupBox("Grid Configuration")
         grid_layout = QVBoxLayout()
         
-        # Create a horizontal layout for the grid size control row
-        grid_size_layout = QHBoxLayout()
-        grid_size_layout.addWidget(QLabel("Grid Size:"))
-
-        # Create spin box for grid size input
-        self.grid_size_spin = QSpinBox()
-        self.grid_size_spin.setMinimum(MIN_GRID_SIZE)
-        self.grid_size_spin.setMaximum(MAX_GRID_SIZE)
-        self.grid_size_spin.setValue(DEFAULT_GRID_SIZE)
-        self.grid_size_spin.valueChanged.connect(self.grid_size_changed.emit)
-        grid_size_layout.addWidget(self.grid_size_spin)
-        
-        # Add the grid size control row to the grid configuration layout
-        grid_layout.addLayout(grid_size_layout)
+        # Create number input widget for grid size
+        self.grid_size_input = NumberInputWidget(
+            label="Grid Size:",
+            default_value=DEFAULT_GRID_SIZE,
+            min_value=MIN_GRID_SIZE,
+            max_value=MAX_GRID_SIZE
+        )
+        self.grid_size_input.value_changed.connect(self.grid_size_changed.emit)
+        grid_layout.addWidget(self.grid_size_input)
         
         # Set the layout for the grid configuration group box
         grid_group.setLayout(grid_layout)
