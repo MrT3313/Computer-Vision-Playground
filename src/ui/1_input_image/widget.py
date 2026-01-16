@@ -1,9 +1,11 @@
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt
+from ui.common import PixelGridWidget
 
 class InputImageWidget(QFrame):
-    def __init__(self):
+    def __init__(self, model):
         super().__init__()
+        self._model = model
         self._setup_ui()
     
     def _setup_ui(self):
@@ -35,10 +37,9 @@ class InputImageWidget(QFrame):
         # Add the title label to the title bar layout
         title_layout.addWidget(title_label)
         
-        # Create the content area frame that will hold the main panel content
-        content_area = QFrame()
-        content_area.setStyleSheet("background: transparent; border: none;")
+        # Create the pixel grid widget that will display the grid
+        pixel_grid = PixelGridWidget(self._model)
         
-        # Add both the title bar and content area to the main layout
+        # Add both the title bar and pixel grid to the main layout
         main_layout.addWidget(title_bar) # Title bar at the top
-        main_layout.addWidget(content_area, 1) # Content area below with stretch factor 1
+        main_layout.addWidget(pixel_grid, 1) # Pixel grid below with stretch factor 1
