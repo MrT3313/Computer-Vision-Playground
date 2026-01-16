@@ -112,6 +112,8 @@ class KernelConfigWidget(QFrame):
         if filter_name == "Mean":
             self._kernel_model.set_all_values(1.0)
             self.kernel_grid.setEnabled(False)
+            self.kernel_grid.setToolTip("Mean filter uses a fixed kernel with all values set to 1")
             self.constant_input.set_value(1.0)
         else:
             self.kernel_grid.setEnabled(True)
+            self.kernel_grid.setToolTip("")

@@ -186,6 +186,10 @@ class MainWindow(QMainWindow):
         self._control_panel.type_changed.connect(self._on_config_changed)
         self._control_panel.filter_changed.connect(self._on_config_changed)
         
+        # Initialize kernel config with current filter state now that connections are established
+        current_filter = self._control_panel.filter_dropdown.combobox.currentText()
+        self._kernel_config.set_filter(current_filter)
+        
         return self._control_panel
     
     def _on_config_changed(self, *args) -> None:
