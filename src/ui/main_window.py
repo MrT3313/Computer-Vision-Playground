@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
 from core import ImageGridModel
 from consts import DEFAULT_GRID_SIZE
@@ -45,8 +45,16 @@ class MainWindow(QMainWindow):
         left_widget = self._create_left_side()
         right_widget = self._create_right_side()
         
+        # Wrap left side in scroll area to handle vertical overflow when kernel grows
+        left_scroll = QScrollArea()
+        left_scroll.setWidget(left_widget)
+        left_scroll.setWidgetResizable(True)
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        left_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        left_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        
         # Add widgets to layout with stretch factors (left: 1, right: 0 = fixed width)
-        main_layout.addWidget(left_widget, 1)
+        main_layout.addWidget(left_scroll, 1)
         main_layout.addWidget(right_widget, 0)
     
     def _create_left_side(self) -> QWidget:
@@ -91,9 +99,6 @@ class MainWindow(QMainWindow):
         kernel_config = KernelConfigWidget()
         output_image = OutputImageWidget(self._output_model)
         
-        # Fix kernel config width to prevent it from stretching
-        kernel_config.setFixedWidth(200)
-        
         # Add widgets to top row (input and output stretch, kernel config fixed)
         top_layout.addWidget(input_image, 1) # Stretch factor 1
         top_layout.addWidget(kernel_config, 0) # Stretch factor 0 (fixed)
@@ -102,9 +107,9 @@ class MainWindow(QMainWindow):
         # Create filter calculations widget for detailed computation display
         filter_calculations = FilterCalculationsWidget()
         
-        # Add top row and calculations to left layout with 60/40 split
-        left_layout.addWidget(top_row, 60) # Top row gets 60% of vertical space
-        left_layout.addWidget(filter_calculations, 40) # Calculations get 40% of vertical space
+        # Add top row and calculations to left layout
+        left_layout.addWidget(top_row, 1)
+        left_layout.addWidget(filter_calculations, 0)
         
         return left_widget
     

@@ -1,6 +1,7 @@
-from PySide6.QtWidgets import QWidget, QInputDialog
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtWidgets import QWidget, QInputDialog, QSizePolicy
+from PySide6.QtCore import Qt, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QColor, QFont, QMouseEvent
+from consts import DEFAULT_KERNEL_CELL_SIZE
 
 
 class KernelGridWidget(QWidget):
@@ -10,7 +11,7 @@ class KernelGridWidget(QWidget):
         self._model = model
         self._model.grid_changed.connect(self._on_grid_changed)
         
-        self.setMinimumSize(100, 100)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         
         self.setAutoFillBackground(True)
         palette = self.palette()
@@ -18,7 +19,18 @@ class KernelGridWidget(QWidget):
         self.setPalette(palette)
     
     def _on_grid_changed(self, size: int, grid_data: list[list[float]]) -> None:
+        grid_size = self._model.get_grid_size()
+        widget_size = grid_size * DEFAULT_KERNEL_CELL_SIZE
+        self.setFixedSize(widget_size, widget_size)
         self.update()
+    
+    def sizeHint(self) -> QSize:
+        grid_size = self._model.get_grid_size()
+        size = grid_size * DEFAULT_KERNEL_CELL_SIZE
+        return QSize(size, size)
+    
+    def minimumSizeHint(self) -> QSize:
+        return self.sizeHint()
     
     def mousePressEvent(self, event: QMouseEvent):
         if not self.isEnabled():
@@ -28,22 +40,14 @@ class KernelGridWidget(QWidget):
         if grid_size == 0:
             return
         
-        widget_width = self.width()
-        widget_height = self.height()
-        min_dimension = min(widget_width, widget_height)
-        cell_size = int(min_dimension / grid_size)
-        
-        offset_x = int((widget_width - (cell_size * grid_size)) / 2)
-        offset_y = int((widget_height - (cell_size * grid_size)) / 2)
-        
-        click_x = event.pos().x() - offset_x
-        click_y = event.pos().y() - offset_y
+        click_x = event.pos().x()
+        click_y = event.pos().y()
         
         if click_x < 0 or click_y < 0:
             return
         
-        col = int(click_x / cell_size)
-        row = int(click_y / cell_size)
+        col = int(click_x / DEFAULT_KERNEL_CELL_SIZE)
+        row = int(click_y / DEFAULT_KERNEL_CELL_SIZE)
         
         if 0 <= row < grid_size and 0 <= col < grid_size:
             current_value = self._model.get_value(row, col)
@@ -70,15 +74,6 @@ class KernelGridWidget(QWidget):
         if grid_size == 0:
             return
         
-        widget_width = self.width()
-        widget_height = self.height()
-        
-        min_dimension = min(widget_width, widget_height)
-        cell_size = int(min_dimension / grid_size)
-        
-        offset_x = int((widget_width - (cell_size * grid_size)) / 2)
-        offset_y = int((widget_height - (cell_size * grid_size)) / 2)
-        
         border_color = QColor(150, 150, 150)
         border_pen = QPen(border_color)
         border_pen.setWidth(1)
@@ -93,20 +88,20 @@ class KernelGridWidget(QWidget):
         
         for row in range(grid_size):
             for col in range(grid_size):
-                x = offset_x + col * cell_size
-                y = offset_y + row * cell_size
+                x = col * DEFAULT_KERNEL_CELL_SIZE
+                y = row * DEFAULT_KERNEL_CELL_SIZE
                 
-                painter.fillRect(x, y, cell_size, cell_size, cell_bg_color)
+                painter.fillRect(x, y, DEFAULT_KERNEL_CELL_SIZE, DEFAULT_KERNEL_CELL_SIZE, cell_bg_color)
                 
                 painter.setPen(border_pen)
-                painter.drawRect(x, y, cell_size, cell_size)
+                painter.drawRect(x, y, DEFAULT_KERNEL_CELL_SIZE, DEFAULT_KERNEL_CELL_SIZE)
                 
                 cell_value = grid_data[row][col]
                 value_text = f"{cell_value:.2f}" if cell_value != 0 else "0"
                 
                 painter.setPen(text_pen)
                 painter.drawText(
-                    QRect(x, y, cell_size, cell_size),
+                    QRect(x, y, DEFAULT_KERNEL_CELL_SIZE, DEFAULT_KERNEL_CELL_SIZE),
                     Qt.AlignmentFlag.AlignCenter,
                     value_text
                 )

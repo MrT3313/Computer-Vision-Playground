@@ -19,7 +19,6 @@ class KernelConfigWidget(QFrame):
     def _setup_ui(self):
         self.setFrameShape(QFrame.Shape.Box)
         self.setLineWidth(2)
-        self.setMinimumHeight(200)
         
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -78,8 +77,6 @@ class KernelConfigWidget(QFrame):
         
         self.final_kernel_grid = FinalKernelGridWidget(self._kernel_model, DEFAULT_CONSTANT_MULTIPLIER)
         content_layout.addWidget(self.final_kernel_grid, alignment=Qt.AlignmentFlag.AlignCenter)
-        
-        content_layout.addStretch()
         
         main_layout.addWidget(title_bar)
         main_layout.addWidget(content_area, 1)
