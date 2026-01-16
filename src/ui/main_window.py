@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         output_image = OutputImageWidget(self._output_model)
         
         # Fix kernel config width to prevent it from stretching
-        kernel_config.setFixedWidth(150)
+        kernel_config.setFixedWidth(200)
         
         # Add widgets to top row (input and output stretch, kernel config fixed)
         top_layout.addWidget(input_image, 1) # Stretch factor 1
