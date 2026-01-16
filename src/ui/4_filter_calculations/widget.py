@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from core import ApplicationState
 from core.mean_filter_calculator import MeanFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
+from .formula_display_widget import FormulaDisplayWidget
 
 
 class FilterCalculationsWidget(QFrame):
@@ -56,6 +57,8 @@ class FilterCalculationsWidget(QFrame):
         self._placeholder_label = QLabel("Click 'Start' to begin calculations")
         self._placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
+        self._formula_widget = FormulaDisplayWidget()
+        
         self._scroll_area = QScrollArea()
         self._scroll_area.setWidgetResizable(False)
         self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
@@ -66,9 +69,11 @@ class FilterCalculationsWidget(QFrame):
         
         self._table_widget = CalculationTableWidget()
         self._scroll_area.setWidget(self._table_widget)
+        self._scroll_area.resizeEvent = self._on_scroll_area_resize
         
         content_layout.addWidget(self._placeholder_label)
-        content_layout.addWidget(self._scroll_area, 0)
+        content_layout.addWidget(self._formula_widget, 0)
+        content_layout.addWidget(self._scroll_area, 1)
         
         self._result_label = QLabel()
         self._result_label.setStyleSheet("color: white; font-size: 13px; font-weight: bold; padding: 10px;")
@@ -80,18 +85,26 @@ class FilterCalculationsWidget(QFrame):
         
         self._show_placeholder()
     
+    def _on_scroll_area_resize(self, event):
+        QScrollArea.resizeEvent(self._scroll_area, event)
+        viewport_width = self._scroll_area.viewport().width()
+        self._table_widget.resize(viewport_width, self._table_widget.height())
+    
     def _show_placeholder(self):
         self._placeholder_label.setVisible(True)
+        self._formula_widget.setVisible(False)
         self._scroll_area.setVisible(False)
         self._result_label.setVisible(False)
     
     def _show_content(self):
         self._placeholder_label.setVisible(False)
+        self._formula_widget.setVisible(True)
         self._scroll_area.setVisible(True)
         self._result_label.setVisible(True)
     
     def set_filter(self, filter_name: str) -> None:
         self._filter_type = filter_name
+        self._formula_widget.set_filter(filter_name)
         self._update_display()
     
     def set_constant(self, constant: float) -> None:

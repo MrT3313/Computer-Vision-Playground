@@ -43,7 +43,7 @@ class OutputImageWidget(QFrame):
         title_layout.setContentsMargins(5, 0, 5, 0) # Add 5px padding on left and right
         
         # Create the title label
-        title_label = QLabel("3. Output Image")
+        title_label = QLabel("3. Output Image: G(i,j)")
         title_label.setStyleSheet("font-size: 12px; font-weight: bold; background: transparent; border: none;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) # Align text to the left and vertically centered
         

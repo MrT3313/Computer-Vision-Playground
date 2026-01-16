@@ -11,6 +11,7 @@ class CalculationTableWidget(QWidget):
         self._cell_widths = []
         self._cell_height = 30
         self._row_count = 6
+        self.setMinimumHeight(self._row_count * self._cell_height)
     
     def set_calculations(self, calculations: list) -> None:
         self._calculations = calculations
@@ -18,7 +19,8 @@ class CalculationTableWidget(QWidget):
             self._calculate_dimensions()
             total_width = self._label_width + sum(self._cell_widths)
             height = self._row_count * self._cell_height
-            self.setFixedSize(total_width, height)
+            self.setMinimumWidth(total_width)
+            self.setFixedHeight(height)
         self.update()
         self.updateGeometry()
     
@@ -77,6 +79,10 @@ class CalculationTableWidget(QWidget):
     def minimumSizeHint(self) -> QSize:
         return self.sizeHint()
     
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update()
+    
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
@@ -105,6 +111,13 @@ class CalculationTableWidget(QWidget):
             "Bounded Values:"
         ]
         
+        min_total_width = self._label_width + sum(self._cell_widths)
+        available_width = self.width()
+        extra_space = max(0, available_width - min_total_width)
+        extra_per_cell = extra_space / num_cols if num_cols > 0 else 0
+        
+        actual_cell_widths = [w + extra_per_cell for w in self._cell_widths]
+        
         for row_idx in range(self._row_count):
             y = row_idx * self._cell_height
             
@@ -116,7 +129,7 @@ class CalculationTableWidget(QWidget):
         
         x_offset = self._label_width
         for col_idx, calc in enumerate(self._calculations):
-            cell_width = self._cell_widths[col_idx]
+            cell_width = actual_cell_widths[col_idx]
             
             for row_idx in range(self._row_count):
                 y = row_idx * self._cell_height
