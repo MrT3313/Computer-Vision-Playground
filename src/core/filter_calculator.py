@@ -185,6 +185,7 @@ class FilterCalculator:
                 coordinates=coordinates,
                 values=values,
                 kernel_values=kernel,
+                constant=kernel_config.constant,
                 result=final_result,
                 center_row=center_row,
                 center_col=center_col

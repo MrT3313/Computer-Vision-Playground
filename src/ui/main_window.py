@@ -52,6 +52,12 @@ class MainWindow(QMainWindow):
         #######################################################################
         self.setup_ui()
         self.connect_signals()
+        
+        self.kernel_values.update_kernel_values_state(
+            self.kernel_config.category,
+            self.kernel_config.filter_selection
+        )
+        
         self.update_kernel_position()
         
     # SETUP METHODS ###########################################################

@@ -39,6 +39,12 @@ class KernelValuesWidget(QWidget):
         
         layout.addSpacing(10)
         
+        self.lock_label = QLabel("Fixed values (Mean filter)")
+        self.lock_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.lock_label.setStyleSheet("color: #888; font-style: italic; padding: 5px;")
+        self.lock_label.setVisible(False)
+        layout.addWidget(self.lock_label)
+        
         self.kernel_grid = KernelGridWidget(self.kernel_config)
         self.kernel_grid.value_changed.connect(self._on_kernel_value_changed)
         layout.addWidget(self.kernel_grid, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -72,8 +78,21 @@ class KernelValuesWidget(QWidget):
     def update_kernel_values_state(self, category: str, filter_selection: str):
         if category == "Linear" and filter_selection == "Custom":
             self.kernel_grid.setEnabled(True)
+            self.kernel_grid.setToolTip("Click cells to edit kernel values")
+            self.lock_label.setVisible(False)
         else:
             self.kernel_grid.setEnabled(False)
+            if filter_selection == "Mean":
+                self.kernel_grid.setToolTip("Kernel values are fixed for Mean filter (all values are 1)")
+                self.lock_label.setText("Fixed values (Mean filter)")
+                self.lock_label.setVisible(True)
+            elif filter_selection == "Median":
+                self.kernel_grid.setToolTip("Kernel values are not used for Median filter")
+                self.lock_label.setText("Not used (Median filter)")
+                self.lock_label.setVisible(True)
+            else:
+                self.kernel_grid.setToolTip("Kernel values cannot be edited in this mode")
+                self.lock_label.setVisible(False)
     
     def set_constant(self, value: float):
         self.constant = value
