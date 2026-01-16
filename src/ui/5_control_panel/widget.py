@@ -14,6 +14,12 @@ class ControlPanelWidget(QWidget):
     show_pixel_values_changed = Signal(bool)
     # Signal emitted when the show colors checkbox state changes, passes the new state as a boolean
     show_colors_changed = Signal(bool)
+    # Signal emitted when the filter category changes, passes the category as a string
+    category_changed = Signal(str)
+    # Signal emitted when the filter type changes, passes the type as a string
+    type_changed = Signal(str)
+    # Signal emitted when the filter selection changes, passes the filter as a string
+    filter_changed = Signal(str)
     
     def __init__(self, coordinator=None):
         super().__init__()
@@ -84,6 +90,43 @@ class ControlPanelWidget(QWidget):
         
         # Add the input image configuration group to the main layout
         layout.addWidget(input_image_group)
+        
+        # Create group box for filter configuration controls
+        filter_group = QGroupBox("Filter Configuration")
+        filter_layout = QVBoxLayout()
+        
+        # Create dropdown widget for selecting filter category
+        self.category_dropdown = DropdownWidget(
+            label="Category:",
+            options=["Linear", "Non-Linear"],
+            default_option="Linear"
+        )
+        self.category_dropdown.value_changed.connect(self._on_category_changed)
+        filter_layout.addWidget(self.category_dropdown)
+        
+        # Create dropdown widget for selecting filter type
+        self.type_dropdown = DropdownWidget(
+            label="Type:",
+            options=["Cross-Correlation", "Convolution"],
+            default_option="Cross-Correlation"
+        )
+        self.type_dropdown.value_changed.connect(self._on_type_changed)
+        filter_layout.addWidget(self.type_dropdown)
+        
+        # Create dropdown widget for selecting specific filter
+        self.filter_dropdown = DropdownWidget(
+            label="Filter Selection:",
+            options=["Mean"],
+            default_option="Mean"
+        )
+        self.filter_dropdown.value_changed.connect(self._on_filter_changed)
+        filter_layout.addWidget(self.filter_dropdown)
+        
+        # Set the layout for the filter configuration group box
+        filter_group.setLayout(filter_layout)
+        
+        # Add the filter configuration group to the main layout
+        layout.addWidget(filter_group)
         
         # Create group box for navigation controls
         nav_group = QGroupBox("Navigation")
@@ -158,6 +201,26 @@ class ControlPanelWidget(QWidget):
         if not is_checked and not self.show_pixel_values_checkbox.isChecked():
             self.show_pixel_values_checkbox.setChecked(True)
         self.show_colors_changed.emit(is_checked)
+    
+    def _on_category_changed(self, category: str) -> None:
+        self.category_changed.emit(category)
+        
+        if category == "Non-Linear":
+            self.type_dropdown.combobox.setEnabled(False)
+            self.filter_dropdown.combobox.clear()
+            self.filter_dropdown.combobox.addItems(["Median"])
+            self.filter_dropdown.combobox.setCurrentText("Median")
+        else:
+            self.type_dropdown.combobox.setEnabled(True)
+            self.filter_dropdown.combobox.clear()
+            self.filter_dropdown.combobox.addItems(["Mean"])
+            self.filter_dropdown.combobox.setCurrentText("Mean")
+    
+    def _on_type_changed(self, type_value: str) -> None:
+        self.type_changed.emit(type_value)
+    
+    def _on_filter_changed(self, filter_value: str) -> None:
+        self.filter_changed.emit(filter_value)
     
     def _on_state_changed(self, state) -> None:
         # Update UI when application state changes
