@@ -93,11 +93,11 @@ class MainWindow(QMainWindow):
         top_layout.setSpacing(10) # space between widgets
         top_layout.setContentsMargins(0, 0, 0, 0)
         
-        input_image = InputImageWidget(self._input_model, self._coordinator)
+        self._input_image = InputImageWidget(self._input_model, self._coordinator)
         self._kernel_config = KernelConfigWidget()
         output_image = OutputImageWidget(self._output_model, self._coordinator)
         
-        top_layout.addWidget(input_image, 1)
+        top_layout.addWidget(self._input_image, 1)
         top_layout.addWidget(self._kernel_config, 0)
         top_layout.addWidget(output_image, 1)
         
@@ -130,6 +130,8 @@ class MainWindow(QMainWindow):
         control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
         control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
         control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
+        
+        control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
         
         self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
         

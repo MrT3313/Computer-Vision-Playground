@@ -67,3 +67,7 @@ class InputImageWidget(QFrame):
         if self._coordinator and self._pixel_grid:
             affected_cells = self._coordinator.get_affected_cells()
             self._pixel_grid.set_highlighted_cells(affected_cells)
+    
+    def set_edit_mode(self, mode: str) -> None:
+        if self._pixel_grid:
+            self._pixel_grid.set_edit_mode(mode)

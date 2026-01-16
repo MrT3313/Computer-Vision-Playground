@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QInputDialog
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtGui import QPainter, QPen, QColor, QMouseEvent
 
 
 class PixelGridWidget(QWidget):
@@ -14,9 +14,13 @@ class PixelGridWidget(QWidget):
         self._bordered_cell = None
         self._border_color = QColor(255, 140, 0)
         self._border_width = 3
+        self._edit_mode = "Toggle"
+        self._is_dragging = False
+        self._last_toggled_cell = None
 
         self._model.grid_changed.connect(self._on_grid_changed)
         
+        self.setMouseTracking(True)
         self.setMinimumSize(100, 100)
 
         self.setAutoFillBackground(True)
@@ -45,6 +49,90 @@ class PixelGridWidget(QWidget):
         self._highlighted_cells = []
         self._bordered_cell = None
         self.update()
+    
+    def set_edit_mode(self, mode: str) -> None:
+        self._edit_mode = mode
+    
+    def _get_cell_from_position(self, x: int, y: int) -> tuple[int, int] | None:
+        grid_size = self._model.get_grid_size()
+        if grid_size == 0:
+            return None
+        
+        if x < 0 or y < 0:
+            return None
+        
+        widget_width = self.width()
+        widget_height = self.height()
+        
+        min_dimension = min(widget_width, widget_height)
+        cell_size = int(min_dimension / grid_size)
+        
+        offset_x = int((widget_width - (cell_size * grid_size)) / 2)
+        offset_y = int((widget_height - (cell_size * grid_size)) / 2)
+        
+        adjusted_x = x - offset_x
+        adjusted_y = y - offset_y
+        
+        if adjusted_x < 0 or adjusted_y < 0:
+            return None
+        
+        col = int(adjusted_x / cell_size)
+        row = int(adjusted_y / cell_size)
+        
+        if 0 <= row < grid_size and 0 <= col < grid_size:
+            return (row, col)
+        
+        return None
+    
+    def mousePressEvent(self, event: QMouseEvent):
+        cell = self._get_cell_from_position(event.pos().x(), event.pos().y())
+        if cell is None:
+            return
+        
+        row, col = cell
+        current_value = self._model.get_grid_data()[row][col]
+        
+        if self._edit_mode == "Toggle":
+            self._is_dragging = True
+            self._last_toggled_cell = (row, col)
+            new_value = 0 if current_value != 0 else 255
+            self._model.set_cell(row, col, new_value)
+        elif self._edit_mode == "Custom":
+            new_value, ok = QInputDialog.getInt(
+                self,
+                "Edit Pixel Value",
+                f"Enter value for cell ({row}, {col}):",
+                current_value,
+                0,
+                255,
+                1
+            )
+            
+            if ok:
+                self._model.set_cell(row, col, new_value)
+    
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if not self._is_dragging or self._edit_mode != "Toggle":
+            return
+        
+        if not (event.buttons() & Qt.MouseButton.LeftButton):
+            return
+        
+        cell = self._get_cell_from_position(event.pos().x(), event.pos().y())
+        if cell is None:
+            return
+        
+        row, col = cell
+        
+        if self._last_toggled_cell != (row, col):
+            self._last_toggled_cell = (row, col)
+            current_value = self._model.get_grid_data()[row][col]
+            new_value = 0 if current_value != 0 else 255
+            self._model.set_cell(row, col, new_value)
+    
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        self._is_dragging = False
+        self._last_toggled_cell = None
     
     def paintEvent(self, event):
         # Create painter object for drawing the grid

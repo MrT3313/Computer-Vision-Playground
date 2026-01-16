@@ -2,10 +2,12 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBo
 from PySide6.QtCore import Signal
 from consts import DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE
 from ui.common.number_input import NumberInputWidget
+from ui.common.dropdown import DropdownWidget
 
 
 class ControlPanelWidget(QWidget):
     grid_size_changed = Signal(int)
+    input_mode_changed = Signal(str)
     
     def __init__(self, coordinator=None):
         super().__init__()
@@ -34,6 +36,21 @@ class ControlPanelWidget(QWidget):
         grid_group.setLayout(grid_layout)
         
         layout.addWidget(grid_group)
+        
+        input_image_group = QGroupBox("Input Image Configuration")
+        input_image_layout = QVBoxLayout()
+        
+        self.input_mode_dropdown = DropdownWidget(
+            label="Mode:",
+            options=["Toggle", "Custom"],
+            default_option="Toggle"
+        )
+        self.input_mode_dropdown.value_changed.connect(self.input_mode_changed.emit)
+        input_image_layout.addWidget(self.input_mode_dropdown)
+        
+        input_image_group.setLayout(input_image_layout)
+        
+        layout.addWidget(input_image_group)
         
         nav_group = QGroupBox("Navigation")
         nav_layout = QVBoxLayout()
