@@ -30,6 +30,10 @@ class PixelGridWidget(QWidget):
         self._is_dragging = False
         # Track the last cell toggled during drag to avoid re-toggling same cell
         self._last_toggled_cell = None
+        # Whether to show the pixel values in the grid
+        self._show_pixel_values = True
+        # Whether to show the pixel colors in the grid
+        self._show_colors = True
 
         # Connect to model's signal to update display when grid data changes
         self._model.grid_changed.connect(self._on_grid_changed)
@@ -74,6 +78,14 @@ class PixelGridWidget(QWidget):
     def set_edit_mode(self, mode: str) -> None:
         # Change the editing mode ("Toggle" or "Custom")
         self._edit_mode = mode
+    
+    def set_show_pixel_values(self, show: bool) -> None:
+        self._show_pixel_values = show
+        self.update()
+    
+    def set_show_colors(self, show: bool) -> None:
+        self._show_colors = show
+        self.update()
     
     def _get_cell_from_position(self, x: int, y: int) -> tuple[int, int] | None:
         # Convert mouse pixel coordinates to grid cell coordinates (row, col)
@@ -221,7 +233,11 @@ class PixelGridWidget(QWidget):
                 
                 # Get cell value (0-255) and create grayscale color
                 cell_value = grid_data[row][col]
-                cell_color = QColor(cell_value, cell_value, cell_value)
+                
+                if self._show_colors:
+                    cell_color = QColor(cell_value, cell_value, cell_value)
+                else:
+                    cell_color = QColor(255, 255, 255)
                 
                 # Fill the cell with its color
                 painter.fillRect(x, y, cell_size, cell_size, cell_color)
@@ -229,6 +245,22 @@ class PixelGridWidget(QWidget):
                 # Draw the cell border
                 painter.setPen(border_pen)
                 painter.drawRect(x, y, cell_size, cell_size)
+                
+                if self._show_pixel_values:
+                    if self._show_colors:
+                        text_color = QColor(0, 0, 0) if cell_value > 127 else QColor(255, 255, 255)
+                    else:
+                        text_color = QColor(0, 0, 0)
+                    painter.setPen(text_color)
+                    
+                    font = painter.font()
+                    font_size = max(6, int(cell_size * 0.3))
+                    font.setPixelSize(font_size)
+                    painter.setFont(font)
+                    
+                    from PySide6.QtCore import QRect
+                    text_rect = QRect(x, y, cell_size, cell_size)
+                    painter.drawText(text_rect, Qt.AlignmentFlag.AlignCenter, str(cell_value))
         
         # Draw highlighted cell borders (e.g., for cells under the kernel)
         for row, col in self._highlighted_cells:

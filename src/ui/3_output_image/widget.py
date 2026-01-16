@@ -91,3 +91,13 @@ class OutputImageWidget(QFrame):
             output_cell = self._coordinator.get_output_cell()
             # Draw a border around this cell in the display
             self._pixel_grid.set_bordered_cell(output_cell)
+    
+    def set_show_pixel_values(self, show: bool) -> None:
+        # Show or hide the pixel values in the pixel grid
+        if self._pixel_grid:
+            self._pixel_grid.set_show_pixel_values(show)
+    
+    def set_show_colors(self, show: bool) -> None:
+        # Show or hide the colors in the pixel grid
+        if self._pixel_grid:
+            self._pixel_grid.set_show_colors(show)

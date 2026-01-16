@@ -104,12 +104,12 @@ class MainWindow(QMainWindow):
         # Create kernel configuration widget
         self._kernel_config = KernelConfigWidget()
         # Create output image widget with coordinator for position tracking
-        output_image = OutputImageWidget(self._output_model, self._coordinator)
+        self._output_image = OutputImageWidget(self._output_model, self._coordinator)
         
         # Add widgets to top row with stretch factors (input: 1, kernel: 0, output: 1)
         top_layout.addWidget(self._input_image, 1)
         top_layout.addWidget(self._kernel_config, 0)
-        top_layout.addWidget(output_image, 1)
+        top_layout.addWidget(self._output_image, 1)
         
         # Create filter calculations widget for detailed computation display
         filter_calculations = FilterCalculationsWidget()
@@ -136,19 +136,26 @@ class MainWindow(QMainWindow):
         ControlPanelWidget = control_panel_module.ControlPanelWidget
         
         # Create control panel with coordinator for navigation control
-        control_panel = ControlPanelWidget(self._coordinator)
+        self._control_panel = ControlPanelWidget(self._coordinator)
         # Set fixed width to prevent control panel from expanding
-        control_panel.setFixedWidth(300)
+        self._control_panel.setFixedWidth(300)
         
         # Connect grid size changes to update all models and coordinator
-        control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
-        control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
-        control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
+        self._control_panel.grid_size_changed.connect(self._input_model.set_grid_size)
+        self._control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
+        self._control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
         
         # Connect input mode changes to update input image editing behavior
-        control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
+        self._control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
         
-        # Connect kernel size changes to update coordinator's navigation boundaries
+        # Connect show pixel values changes to update input and output image pixel values
+        self._control_panel.show_pixel_values_changed.connect(self._input_image.set_show_pixel_values)
+        self._control_panel.show_pixel_values_changed.connect(self._output_image.set_show_pixel_values)
+        
+        # Connect show colors changes to update input and output image colors
+        self._control_panel.show_colors_changed.connect(self._input_image.set_show_colors)
+        self._control_panel.show_colors_changed.connect(self._output_image.set_show_colors)
+        
         self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
         
-        return control_panel
+        return self._control_panel
