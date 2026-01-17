@@ -44,6 +44,9 @@ class FormulaDisplayWidget(QWidget):
         # Generate the appropriate LaTeX formula based on filter selection
         if self._filter_selection == "Mean":
             formula = self._create_mean_formula()
+        elif self._filter_selection == "Gaussian":
+            # Gaussian filter respects Type selection (same as Custom)
+            formula = self._create_custom_formula()
         elif self._filter_selection == "Custom":
             formula = self._create_custom_formula()
         else:

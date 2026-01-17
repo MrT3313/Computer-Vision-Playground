@@ -8,7 +8,8 @@ from consts import (
     DEFAULT_FILTER_TYPE, FILTER_TYPES,
     DEFAULT_FILTER_SELECTION, FILTER_SELECTIONS_LINEAR, FILTER_SELECTIONS_NONLINEAR,
     DEFAULT_NONLINEAR_FILTER,
-    PROFILE_FILTER_TYPE, PROFILE_FILTER_SELECTION
+    PROFILE_FILTER_TYPE, PROFILE_FILTER_SELECTION,
+    DEFAULT_SIGMA, MIN_SIGMA, MAX_SIGMA, SIGMA_STEP, SIGMA_DECIMALS
 )
 from ui.common.number_input import NumberInputWidget
 from ui.common.dropdown import DropdownWidget
@@ -31,6 +32,10 @@ class ControlPanelWidget(QWidget):
     filter_changed = Signal(str)
     # Signal emitted when the filter profile changes, passes the profile as a string
     profile_changed = Signal(str)
+    # Signal emitted when the sigma value changes, passes the sigma as a float
+    sigma_changed = Signal(float)
+    # Signal emitted when the normalize checkbox state changes, passes the new state as a boolean
+    normalize_changed = Signal(bool)
     
     def __init__(self, coordinator=None):
         super().__init__()
@@ -141,6 +146,26 @@ class ControlPanelWidget(QWidget):
         )
         self.filter_dropdown.value_changed.connect(self._on_filter_changed)
         filter_layout.addWidget(self.filter_dropdown)
+        
+        # Create number input widget for sigma parameter (initially hidden)
+        self.sigma_input = NumberInputWidget(
+            label="Sigma (σ):",
+            default_value=DEFAULT_SIGMA,
+            min_value=MIN_SIGMA,
+            max_value=MAX_SIGMA,
+            step=SIGMA_STEP,
+            decimals=SIGMA_DECIMALS
+        )
+        self.sigma_input.value_changed.connect(self._on_sigma_changed)
+        self.sigma_input.setVisible(False)
+        filter_layout.addWidget(self.sigma_input)
+        
+        # Create checkbox for kernel normalization (initially hidden)
+        self.normalize_checkbox = QCheckBox("Normalize Kernel")
+        self.normalize_checkbox.setChecked(True)
+        self.normalize_checkbox.stateChanged.connect(self._on_normalize_changed)
+        self.normalize_checkbox.setVisible(False)
+        filter_layout.addWidget(self.normalize_checkbox)
         
         # Set the layout for the filter configuration group box
         filter_group.setLayout(filter_layout)
@@ -279,10 +304,27 @@ class ControlPanelWidget(QWidget):
         
         if current_category == "Non-Linear":
             self.type_dropdown.combobox.setEnabled(False)
+            self.sigma_input.setVisible(False)
+            self.normalize_checkbox.setVisible(False)
         elif filter_value == DEFAULT_FILTER_SELECTION:
             self.type_dropdown.combobox.setEnabled(False)
+            self.sigma_input.setVisible(False)
+            self.normalize_checkbox.setVisible(False)
+        elif filter_value == "Gaussian":
+            self.type_dropdown.combobox.setEnabled(False)
+            self.sigma_input.setVisible(True)
+            self.normalize_checkbox.setVisible(True)
         else:
             self.type_dropdown.combobox.setEnabled(True)
+            self.sigma_input.setVisible(False)
+            self.normalize_checkbox.setVisible(False)
+    
+    def _on_sigma_changed(self, sigma: float) -> None:
+        self.sigma_changed.emit(sigma)
+    
+    def _on_normalize_changed(self, state: int) -> None:
+        is_checked = state == 2
+        self.normalize_changed.emit(is_checked)
     
     def _on_state_changed(self, state) -> None:
         # Update UI when application state changes

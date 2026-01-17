@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from core import ApplicationState
 from core.mean_filter_calculator import MeanFilterCalculator
 from core.custom_filter_calculator import CustomFilterCalculator
+from core.gaussian_filter_calculator import GaussianFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
 from .formula_display_widget import FormulaDisplayWidget
 
@@ -136,6 +137,8 @@ class FilterCalculationsWidget(QFrame):
         # Create appropriate calculator based on filter selection
         if filter_name == "Mean":
             self._calculator = MeanFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
+        elif filter_name == "Gaussian":
+            self._calculator = GaussianFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
         elif filter_name == "Custom":
             self._calculator = CustomFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
         # Recalculate and update the display with the new filter
@@ -186,6 +189,8 @@ class FilterCalculationsWidget(QFrame):
         # Perform the calculation for the current kernel position
         if self._filter_selection == "Mean":
             result = self._calculator.calculate(self._constant)
+        elif self._filter_selection == "Gaussian":
+            result = self._calculator.calculate(self._constant)
         elif self._filter_selection == "Custom":
             result = self._calculator.calculate(self._constant, self._filter_type)
         else:
@@ -207,6 +212,9 @@ class FilterCalculationsWidget(QFrame):
             mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
             result_text = f"Result: {result['output']:.2f}"
             full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
+        elif self._filter_selection == "Gaussian":
+            result_text = f"Result: {result['output']:.2f}"
+            full_text = f"{sum_text}\n\n{result_text}"
         elif self._filter_selection == "Custom":
             # For Custom filter, output is just the sum
             result_text = f"Result: {result['output']:.2f}"

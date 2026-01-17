@@ -1,5 +1,10 @@
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel, QSizePolicy
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QPixmap, QImage
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+import io
 
 from core.kernel_grid import KernelGridModel
 from .kernel_grid_widget import KernelGridWidget
@@ -19,6 +24,10 @@ class KernelConfigWidget(QFrame):
         super().__init__()
         # Initialize the kernel grid model with default size (2k+1 where k is the kernel radius)
         self._kernel_model = KernelGridModel(2 * DEFAULT_KERNEL_SIZE + 1)
+        # Store current sigma value for Gaussian filter
+        self._sigma = 1.0
+        # Store current normalize setting for Gaussian filter
+        self._normalize = True
         self._setup_ui()
     
     def _setup_ui(self):
@@ -80,6 +89,15 @@ class KernelConfigWidget(QFrame):
         
         kernel_size_group.setLayout(kernel_size_group_layout)
         content_layout.addWidget(kernel_size_group)
+        
+        # Create Gaussian formula display widget (initially hidden)
+        self.gaussian_formula_label = QLabel()
+        self.gaussian_formula_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.gaussian_formula_label.setVisible(False)
+        self.gaussian_formula_label.setContentsMargins(0, 0, 0, 0)
+        self.gaussian_formula_label.setStyleSheet("padding: 0px; margin: 0px;")
+        self._render_gaussian_formula()
+        content_layout.addWidget(self.gaussian_formula_label, 0, Qt.AlignmentFlag.AlignCenter)
         
         # Create the editable kernel grid widget where users can click to modify values
         self.kernel_grid = KernelGridWidget(self._kernel_model)
@@ -144,15 +162,25 @@ class KernelConfigWidget(QFrame):
             self.constant_input.set_value(DEFAULT_CONSTANT_MULTIPLIER)
             self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
+            self.gaussian_formula_label.setVisible(False)
+        elif filter_name == "Gaussian":
+            self.kernel_grid.setEnabled(False)
+            self.kernel_grid.setToolTip("Gaussian filter kernel values are auto-generated from the formula")
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
+            self.gaussian_formula_label.setVisible(True)
+            self._apply_gaussian_kernel()
         elif filter_name == "Custom":
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")
             self.kernel_preset_dropdown.combobox.setEnabled(True)
+            self.gaussian_formula_label.setVisible(False)
         else:
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")
             self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
+            self.gaussian_formula_label.setVisible(False)
     
     def set_profile(self, profile_name: str) -> None:
         if profile_name == "Shift Left":
@@ -181,3 +209,70 @@ class KernelConfigWidget(QFrame):
         
         self._kernel_model.set_all_values(0.0)
         self._kernel_model.set_cell(middle_row, right_col, 1.0)
+    
+    def set_sigma(self, sigma: float) -> None:
+        self._sigma = sigma
+        self._apply_gaussian_kernel()
+    
+    def set_normalize(self, normalize: bool) -> None:
+        self._normalize = normalize
+        self._apply_gaussian_kernel()
+    
+    def _render_gaussian_formula(self) -> None:
+        formula = r'$G_\sigma = \frac{1}{2\pi\sigma^2} e^{- \, \frac{(x^2+y^2)}{2\sigma^2}}$'
+        pixmap = self._latex_to_pixmap(formula)
+        self.gaussian_formula_label.setPixmap(pixmap)
+    
+    def _latex_to_pixmap(self, latex_str: str) -> QPixmap:
+        fig = Figure(figsize=(2, 1), facecolor='white')
+        canvas = FigureCanvasAgg(fig)
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        
+        ax.text(0.5, 0.5, latex_str, 
+                horizontalalignment='center',
+                verticalalignment='center',
+                fontsize=12,
+                transform=ax.transAxes)
+        
+        canvas.draw()
+        
+        buf = io.BytesIO()
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0, facecolor='white')
+        buf.seek(0)
+        
+        plt.close(fig)
+        
+        img = QImage()
+        img.loadFromData(buf.read())
+        
+        return QPixmap.fromImage(img)
+    
+    def _apply_gaussian_kernel(self) -> None:
+        import math
+        
+        size = self._kernel_model.get_grid_size()
+        center = size // 2
+        sigma_squared = self._sigma * self._sigma
+        coefficient = 1.0 / (2.0 * math.pi * sigma_squared)
+        
+        kernel_sum = 0.0
+        temp_values = []
+        
+        for row in range(size):
+            row_values = []
+            for col in range(size):
+                x = col - center
+                y = row - center
+                exponent = -(x * x + y * y) / (2.0 * sigma_squared)
+                value = coefficient * math.exp(exponent)
+                row_values.append(value)
+                kernel_sum += value
+            temp_values.append(row_values)
+        
+        for row in range(size):
+            for col in range(size):
+                value = temp_values[row][col]
+                if self._normalize and kernel_sum > 0:
+                    value = value / kernel_sum
+                self._kernel_model.set_cell(row, col, value)
