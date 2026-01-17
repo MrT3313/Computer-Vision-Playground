@@ -1,0 +1,24 @@
+DEFAULT_FILTER_PROFILE = "None"
+FILTER_PROFILES = ["None", "Shift Right", "Shift Left"]
+
+DEFAULT_FILTER_CATEGORY = "Linear"
+FILTER_CATEGORIES = ["Linear", "Non-Linear"]
+
+DEFAULT_FILTER_TYPE = "Cross-Correlation"
+FILTER_TYPES = ["Cross-Correlation", "Convolution"]
+
+DEFAULT_FILTER_SELECTION = "Mean"
+FILTER_SELECTIONS_LINEAR = ["Mean", "Custom"]
+FILTER_SELECTIONS_NONLINEAR = ["Median"]
+DEFAULT_NONLINEAR_FILTER = "Median"
+
+DEFAULT_INPUT_MODE = "Toggle"
+INPUT_MODES = ["Toggle", "Custom"]
+
+DEFAULT_KERNEL_PRESET = "None"
+KERNEL_PRESETS = ["None", "Identity"]
+
+DEFAULT_KERNEL_VALUE = 1.0
+
+PROFILE_FILTER_TYPE = "Convolution"
+PROFILE_FILTER_SELECTION = "Custom"

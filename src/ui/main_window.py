@@ -167,6 +167,9 @@ class MainWindow(QMainWindow):
         self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
         self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
         
+        # Connect profile changes to kernel config
+        self._control_panel.profile_changed.connect(self._kernel_config.set_profile)
+        
         # Connect category and type changes to filter calculations
         self._control_panel.category_changed.connect(self._filter_calculations.set_category)
         self._control_panel.type_changed.connect(self._filter_calculations.set_type)
@@ -195,6 +198,7 @@ class MainWindow(QMainWindow):
         self._control_panel.category_changed.connect(self._on_config_changed)
         self._control_panel.type_changed.connect(self._on_config_changed)
         self._control_panel.filter_changed.connect(self._on_config_changed)
+        self._control_panel.profile_changed.connect(self._on_config_changed)
         
         # Initialize kernel config with current filter state now that connections are established
         current_filter = self._control_panel.filter_dropdown.combobox.currentText()
