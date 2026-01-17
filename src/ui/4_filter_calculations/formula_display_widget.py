@@ -10,8 +10,10 @@ import io
 class FormulaDisplayWidget(QWidget):
     def __init__(self):
         super().__init__()
-        # Store the current filter type (e.g., "Mean", "Gaussian", etc.)
-        self._filter_type = "Mean"
+        # Store the current filter selection (e.g., "Mean", "Custom", etc.)
+        self._filter_selection = "Mean"
+        # Store the current filter type (e.g., "Cross-Correlation", "Convolution")
+        self._filter_type = "Cross-Correlation"
         self._setup_ui()
     
     def _setup_ui(self):
@@ -28,15 +30,22 @@ class FormulaDisplayWidget(QWidget):
         self._render_formula()
     
     def set_filter(self, filter_name: str) -> None:
+        # Update the filter selection and re-render the corresponding formula
+        self._filter_selection = filter_name
+        self._render_formula()
+    
+    def set_filter_type(self, filter_type: str) -> None:
         # Update the filter type and re-render the corresponding formula
-        self._filter_type = filter_name
+        self._filter_type = filter_type
         self._render_formula()
 
     
     def _render_formula(self) -> None:
-        # Generate the appropriate LaTeX formula based on filter type
-        if self._filter_type == "Mean":
+        # Generate the appropriate LaTeX formula based on filter selection
+        if self._filter_selection == "Mean":
             formula = self._create_mean_formula()
+        elif self._filter_selection == "Custom":
+            formula = self._create_custom_formula()
         else:
             # Fallback message for unsupported filter types
             formula = "No formula available"
@@ -51,6 +60,16 @@ class FormulaDisplayWidget(QWidget):
         # (2k+1)^2 = kernel area (total number of elements)
         # F(u+i, v+j) = input pixel values within kernel window
         return r'$G(i,j) = \frac{1}{(2k + 1)^2} \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} F(u+i, v+j)$'
+    
+    def _create_custom_formula(self) -> str:
+        # Return the LaTeX string for the custom filter formula
+        # Different formula based on Cross-Correlation vs Convolution
+        if self._filter_type == "Convolution":
+            # Convolution: G[i,j] = sum H[u,v] F[i-u, j-v]
+            return r'$G[i, j] = \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} H[u, v] \cdot F[i - u, j - v]$'
+        else:
+            # Cross-Correlation: G[i,j] = sum H[u,v] F[i+u, j+v]
+            return r'$G[i, j] = \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} H[u, v] \cdot F[i + u, j + v]$'
     
     def _latex_to_pixmap(self, latex_str: str) -> QPixmap:
         # Convert a LaTeX formula string to a QPixmap image using matplotlib

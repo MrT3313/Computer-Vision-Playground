@@ -216,7 +216,7 @@ class ControlPanelWidget(QWidget):
         else:
             self.type_dropdown.combobox.setEnabled(True)
             self.filter_dropdown.combobox.clear()
-            self.filter_dropdown.combobox.addItems(["Mean"])
+            self.filter_dropdown.combobox.addItems(["Mean", "Custom"])
             self.filter_dropdown.combobox.setCurrentText("Mean")
     
     def _on_type_changed(self, type_value: str) -> None:

@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QScrollArea, QWidget
 from PySide6.QtCore import Qt
 from core import ApplicationState
 from core.mean_filter_calculator import MeanFilterCalculator
+from core.custom_filter_calculator import CustomFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
 from .formula_display_widget import FormulaDisplayWidget
 
@@ -17,8 +18,12 @@ class FilterCalculationsWidget(QFrame):
         self._coordinator = coordinator
         # Store reference to the output image grid model for writing results
         self._output_model = output_model
-        # Store the current filter type (e.g., "Mean", "Gaussian")
-        self._filter_type = "Mean"
+        # Store the current filter selection (e.g., "Mean", "Custom")
+        self._filter_selection = "Mean"
+        # Store the filter category (e.g., "Linear", "Non-Linear")
+        self._filter_category = "Linear"
+        # Store the filter type (e.g., "Cross-Correlation", "Convolution")
+        self._filter_type = "Cross-Correlation"
         # Store the constant multiplier value for kernel weights
         self._constant = 1.0
         
@@ -84,8 +89,8 @@ class FilterCalculationsWidget(QFrame):
         self._scroll_area.resizeEvent = self._on_scroll_area_resize
         
         # Add all widgets to the content layout
-        content_layout.addWidget(self._placeholder_label)
         content_layout.addWidget(self._formula_widget, 0)  # Stretch factor 0 = fixed height
+        content_layout.addWidget(self._placeholder_label)
         content_layout.addWidget(self._scroll_area, 1)  # Stretch factor 1 = expandable
         
         # Create label to display the final calculation result
@@ -110,9 +115,9 @@ class FilterCalculationsWidget(QFrame):
         self._table_widget.resize(viewport_width, self._table_widget.height())
     
     def _show_placeholder(self):
-        # Show the placeholder message and hide calculation content
+        # Show the placeholder message and hide calculation content (but keep formula visible)
         self._placeholder_label.setVisible(True)
-        self._formula_widget.setVisible(False)
+        self._formula_widget.setVisible(True)
         self._scroll_area.setVisible(False)
         self._result_label.setVisible(False)
     
@@ -124,11 +129,26 @@ class FilterCalculationsWidget(QFrame):
         self._result_label.setVisible(True)
     
     def set_filter(self, filter_name: str) -> None:
-        # Update the filter type and refresh the display
-        self._filter_type = filter_name
+        # Update the filter selection and refresh the display
+        self._filter_selection = filter_name
         # Update the formula display to show the new filter's equation
         self._formula_widget.set_filter(filter_name)
+        # Create appropriate calculator based on filter selection
+        if filter_name == "Mean":
+            self._calculator = MeanFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
+        elif filter_name == "Custom":
+            self._calculator = CustomFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
         # Recalculate and update the display with the new filter
+        self._update_display()
+    
+    def set_category(self, category: str) -> None:
+        # Update the filter category and refresh the display
+        self._filter_category = category
+        self._update_display()
+    
+    def set_type(self, filter_type: str) -> None:
+        # Update the filter type and refresh the display
+        self._filter_type = filter_type
         self._update_display()
     
     def set_constant(self, constant: float) -> None:
@@ -163,8 +183,13 @@ class FilterCalculationsWidget(QFrame):
         if self._coordinator.get_state() != ApplicationState.NAVIGATING:
             return
         
-        # Perform the convolution calculation for the current kernel position
-        result = self._calculator.calculate(self._constant)
+        # Perform the calculation for the current kernel position
+        if self._filter_selection == "Mean":
+            result = self._calculator.calculate(self._constant)
+        elif self._filter_selection == "Custom":
+            result = self._calculator.calculate(self._constant, self._filter_type)
+        else:
+            return
         
         # Update the calculation table with step-by-step computation details
         self._table_widget.set_calculations(result['calculations'])
@@ -174,14 +199,21 @@ class FilterCalculationsWidget(QFrame):
         sum_parts = " + ".join([f"{c['bounded_result']:.2f}" for c in calculations])
         sum_text = f"Sum: {sum_parts} = {result['total_sum']:.2f}"
         
-        # Build text for displaying the mean calculation (sum / kernel area)
-        mean_text = f"Mean: {result['total_sum']:.2f} / {result['kernel_area']} = {result['output']:.2f}"
+        # Build result text based on filter type
+        if self._filter_selection == "Mean":
+            kernel_size = self._kernel_model.get_grid_size()
+            k = kernel_size // 2
+            denominator = (2 * k + 1) ** 2
+            mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
+            result_text = f"Result: {result['output']:.2f}"
+            full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
+        elif self._filter_selection == "Custom":
+            # For Custom filter, output is just the sum
+            result_text = f"Result: {result['output']:.2f}"
+            full_text = f"{sum_text}\n\n{result_text}"
+        else:
+            full_text = sum_text
         
-        # Build text for displaying the final result
-        result_text = f"Result: {result['output']:.2f}"
-        
-        # Combine all text with line breaks
-        full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
         self._result_label.setText(full_text)
         
         # Write the calculated output value to the output image model
