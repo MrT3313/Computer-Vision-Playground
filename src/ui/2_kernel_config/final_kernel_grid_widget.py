@@ -12,6 +12,8 @@ class FinalKernelGridWidget(QWidget):
         self._model = model
         # Store the constant multiplier to apply to kernel values
         self._constant = constant
+        # Store the filter type to determine if kernel flipping is needed
+        self._filter_type = "Cross-Correlation"
         
         # Connect to model's signal to update display when kernel data changes
         self._model.grid_changed.connect(self._on_grid_changed)
@@ -28,6 +30,11 @@ class FinalKernelGridWidget(QWidget):
     def set_constant(self, constant: float) -> None:
         # Update the constant multiplier and trigger a repaint
         self._constant = constant
+        self.update()
+    
+    def set_filter_type(self, filter_type: str) -> None:
+        # Update the filter type and trigger a repaint
+        self._filter_type = filter_type
         self.update()
     
     def _on_grid_changed(self, size: int, grid_data: list[list[float]]) -> None:
@@ -60,6 +67,12 @@ class FinalKernelGridWidget(QWidget):
         # Early return if grid size is invalid
         if grid_size == 0:
             return
+        
+        # Flip kernel data if filter type is Convolution
+        if self._filter_type == "Convolution":
+            grid_data = [[grid_data[grid_size - 1 - row][grid_size - 1 - col] 
+                         for col in range(grid_size)] 
+                        for row in range(grid_size)]
         
         # Configure pen for drawing cell borders
         border_color = QColor(150, 150, 150)

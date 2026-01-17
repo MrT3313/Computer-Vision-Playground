@@ -167,6 +167,16 @@ class MainWindow(QMainWindow):
         self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
         self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
         
+        # Connect category and type changes to filter calculations
+        self._control_panel.category_changed.connect(self._filter_calculations.set_category)
+        self._control_panel.type_changed.connect(self._filter_calculations.set_type)
+        
+        # Connect type changes to final kernel grid widget for convolution flipping
+        self._control_panel.type_changed.connect(self._kernel_config.final_kernel_grid.set_filter_type)
+        
+        # Connect type changes to formula display widget for different formulas
+        self._control_panel.type_changed.connect(self._filter_calculations._formula_widget.set_filter_type)
+        
         # Connect coordinator state and position changes to filter calculations
         self._coordinator.state_changed.connect(self._filter_calculations.on_state_changed)
         self._coordinator.position_changed.connect(self._filter_calculations.update_calculation)
