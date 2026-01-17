@@ -167,6 +167,10 @@ class MainWindow(QMainWindow):
         self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
         self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
         
+        # Connect sigma and normalize changes to kernel config
+        self._control_panel.sigma_changed.connect(self._kernel_config.set_sigma)
+        self._control_panel.normalize_changed.connect(self._kernel_config.set_normalize)
+        
         # Connect profile changes to kernel config
         self._control_panel.profile_changed.connect(self._kernel_config.set_profile)
         
@@ -199,6 +203,8 @@ class MainWindow(QMainWindow):
         self._control_panel.type_changed.connect(self._on_config_changed)
         self._control_panel.filter_changed.connect(self._on_config_changed)
         self._control_panel.profile_changed.connect(self._on_config_changed)
+        self._control_panel.sigma_changed.connect(self._on_config_changed)
+        self._control_panel.normalize_changed.connect(self._on_config_changed)
         
         # Initialize kernel config with current filter state now that connections are established
         current_filter = self._control_panel.filter_dropdown.combobox.currentText()
