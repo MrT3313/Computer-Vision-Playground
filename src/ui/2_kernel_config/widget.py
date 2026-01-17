@@ -151,3 +151,31 @@ class KernelConfigWidget(QFrame):
             self.kernel_grid.setToolTip("")
             self.kernel_preset_dropdown.set_value("None")
             self.kernel_preset_dropdown.combobox.setEnabled(False)
+    
+    def set_profile(self, profile_name: str) -> None:
+        if profile_name == "Shift Left":
+            self._apply_shift_left_profile()
+            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
+        elif profile_name == "Shift Right":
+            self._apply_shift_right_profile()
+            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
+        elif profile_name == "None":
+            self.kernel_preset_dropdown.combobox.setEnabled(True)
+    
+    def _apply_shift_left_profile(self) -> None:
+        size = self._kernel_model.get_grid_size()
+        middle_row = size // 2
+        left_col = 0
+        
+        self._kernel_model.set_all_values(0.0)
+        self._kernel_model.set_cell(middle_row, left_col, 1.0)
+    
+    def _apply_shift_right_profile(self) -> None:
+        size = self._kernel_model.get_grid_size()
+        middle_row = size // 2
+        right_col = size - 1
+        
+        self._kernel_model.set_all_values(0.0)
+        self._kernel_model.set_cell(middle_row, right_col, 1.0)

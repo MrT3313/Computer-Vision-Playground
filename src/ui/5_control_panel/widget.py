@@ -20,6 +20,8 @@ class ControlPanelWidget(QWidget):
     type_changed = Signal(str)
     # Signal emitted when the filter selection changes, passes the filter as a string
     filter_changed = Signal(str)
+    # Signal emitted when the filter profile changes, passes the profile as a string
+    profile_changed = Signal(str)
     
     def __init__(self, coordinator=None):
         super().__init__()
@@ -94,6 +96,15 @@ class ControlPanelWidget(QWidget):
         # Create group box for filter configuration controls
         filter_group = QGroupBox("Filter Configuration")
         filter_layout = QVBoxLayout()
+        
+        # Create dropdown widget for selecting filter profile
+        self.profile_dropdown = DropdownWidget(
+            label="Filter Profile:",
+            options=["None", "Shift Right", "Shift Left"],
+            default_option="None"
+        )
+        self.profile_dropdown.value_changed.connect(self._on_profile_changed)
+        filter_layout.addWidget(self.profile_dropdown)
         
         # Create dropdown widget for selecting filter category
         self.category_dropdown = DropdownWidget(
@@ -205,8 +216,38 @@ class ControlPanelWidget(QWidget):
             self.show_pixel_values_checkbox.setChecked(True)
         self.show_colors_changed.emit(is_checked)
     
+    def _on_profile_changed(self, profile: str) -> None:
+        self.profile_changed.emit(profile)
+        
+        if profile != "None":
+            self.category_dropdown.combobox.setEnabled(False)
+            self.filter_dropdown.combobox.setEnabled(False)
+            
+            self.category_dropdown.set_value("Linear")
+            self.type_dropdown.set_value("Convolution")
+            self.filter_dropdown.set_value("Custom")
+            
+            self.type_dropdown.combobox.setEnabled(False)
+        else:
+            self.category_dropdown.combobox.setEnabled(True)
+            self.filter_dropdown.combobox.setEnabled(True)
+            
+            current_category = self.category_dropdown.combobox.currentText()
+            current_filter = self.filter_dropdown.combobox.currentText()
+            
+            if current_category == "Non-Linear":
+                self.type_dropdown.combobox.setEnabled(False)
+            elif current_filter == "Mean":
+                self.type_dropdown.combobox.setEnabled(False)
+            else:
+                self.type_dropdown.combobox.setEnabled(True)
+    
     def _on_category_changed(self, category: str) -> None:
         self.category_changed.emit(category)
+        
+        current_profile = self.profile_dropdown.combobox.currentText()
+        if current_profile != "None":
+            return
         
         if category == "Non-Linear":
             self.type_dropdown.combobox.setEnabled(False)
@@ -224,6 +265,10 @@ class ControlPanelWidget(QWidget):
     
     def _on_filter_changed(self, filter_value: str) -> None:
         self.filter_changed.emit(filter_value)
+        
+        current_profile = self.profile_dropdown.combobox.currentText()
+        if current_profile != "None":
+            return
         
         current_category = self.category_dropdown.combobox.currentText()
         
