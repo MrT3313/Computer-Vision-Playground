@@ -5,6 +5,7 @@ from core.kernel_grid import KernelGridModel
 from .kernel_grid_widget import KernelGridWidget
 from .final_kernel_grid_widget import FinalKernelGridWidget
 from ui.common.number_input import NumberInputWidget
+from ui.common.dropdown import DropdownWidget
 from consts import (
     DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
     DEFAULT_CONSTANT_MULTIPLIER, MIN_CONSTANT_MULTIPLIER, MAX_CONSTANT_MULTIPLIER,
@@ -65,6 +66,16 @@ class KernelConfigWidget(QFrame):
         # Connect value changes to handler that updates the kernel grid size
         self.kernel_size_input.value_changed.connect(self._on_kernel_size_changed)
         kernel_size_group_layout.addWidget(self.kernel_size_input)
+        
+        # Add kernel preset dropdown to the same group box
+        self.kernel_preset_dropdown = DropdownWidget(
+            label="Kernel Preset:",
+            options=["None", "Identity"],
+            default_option="None"
+        )
+        self.kernel_preset_dropdown.value_changed.connect(self._on_preset_changed)
+        kernel_size_group_layout.addWidget(self.kernel_preset_dropdown)
+        
         kernel_size_group.setLayout(kernel_size_group_layout)
         content_layout.addWidget(kernel_size_group)
         
@@ -103,10 +114,25 @@ class KernelConfigWidget(QFrame):
         # Convert kernel radius (k) to full grid size (2k+1) and update the model
         grid_size = 2 * k + 1
         self._kernel_model.set_grid_size(grid_size)
+        self.kernel_preset_dropdown.set_value("None")
     
     def _on_constant_changed(self, value: float) -> None:
         # Update the constant multiplier in the final kernel grid display
         self.final_kernel_grid.set_constant(value)
+    
+    def _on_preset_changed(self, preset_name: str) -> None:
+        if preset_name == "Identity":
+            self._apply_identity_preset()
+        elif preset_name == "None":
+            self._kernel_model.set_all_values(1.0)
+    
+    def _apply_identity_preset(self) -> None:
+        size = self._kernel_model.get_grid_size()
+        center = size // 2
+        for row in range(size):
+            for col in range(size):
+                value = 1.0 if (row == center and col == center) else 0.0
+                self._kernel_model.set_cell(row, col, value)
     
     def set_filter(self, filter_name: str) -> None:
         if filter_name == "Mean":
@@ -114,9 +140,14 @@ class KernelConfigWidget(QFrame):
             self.kernel_grid.setEnabled(False)
             self.kernel_grid.setToolTip("Mean filter uses a fixed kernel with all values set to 1")
             self.constant_input.set_value(1.0)
+            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
         elif filter_name == "Custom":
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")
+            self.kernel_preset_dropdown.combobox.setEnabled(True)
         else:
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")
+            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
