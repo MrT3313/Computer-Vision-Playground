@@ -116,7 +116,7 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting specific filter
         self.filter_dropdown = DropdownWidget(
             label="Filter Selection:",
-            options=["Mean"],
+            options=["Mean", "Custom"],
             default_option="Mean"
         )
         self.filter_dropdown.value_changed.connect(self._on_filter_changed)
@@ -164,6 +164,9 @@ class ControlPanelWidget(QWidget):
         
         # Set initial button visibility based on application state
         self._update_button_visibility()
+        
+        # Set initial Type dropdown state based on default filter selection (Mean)
+        self.type_dropdown.combobox.setEnabled(False)
         
         # Add stretchable space at the bottom to push controls to the top
         layout.addStretch()
@@ -221,6 +224,15 @@ class ControlPanelWidget(QWidget):
     
     def _on_filter_changed(self, filter_value: str) -> None:
         self.filter_changed.emit(filter_value)
+        
+        current_category = self.category_dropdown.combobox.currentText()
+        
+        if current_category == "Non-Linear":
+            self.type_dropdown.combobox.setEnabled(False)
+        elif filter_value == "Mean":
+            self.type_dropdown.combobox.setEnabled(False)
+        else:
+            self.type_dropdown.combobox.setEnabled(True)
     
     def _on_state_changed(self, state) -> None:
         # Update UI when application state changes
