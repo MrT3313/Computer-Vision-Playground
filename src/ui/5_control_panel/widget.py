@@ -1,6 +1,15 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox
 from PySide6.QtCore import Signal
-from consts import DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE
+from consts import (
+    DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE,
+    DEFAULT_INPUT_MODE, INPUT_MODES,
+    DEFAULT_FILTER_PROFILE, FILTER_PROFILES,
+    DEFAULT_FILTER_CATEGORY, FILTER_CATEGORIES,
+    DEFAULT_FILTER_TYPE, FILTER_TYPES,
+    DEFAULT_FILTER_SELECTION, FILTER_SELECTIONS_LINEAR, FILTER_SELECTIONS_NONLINEAR,
+    DEFAULT_NONLINEAR_FILTER,
+    PROFILE_FILTER_TYPE, PROFILE_FILTER_SELECTION
+)
 from ui.common.number_input import NumberInputWidget
 from ui.common.dropdown import DropdownWidget
 
@@ -80,8 +89,8 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting input mode (Toggle or Custom)
         self.input_mode_dropdown = DropdownWidget(
             label="Mode:",
-            options=["Toggle", "Custom"],
-            default_option="Toggle"
+            options=INPUT_MODES,
+            default_option=DEFAULT_INPUT_MODE
         )
         # Emit signal when input mode selection changes
         self.input_mode_dropdown.value_changed.connect(self.input_mode_changed.emit)
@@ -100,8 +109,8 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting filter profile
         self.profile_dropdown = DropdownWidget(
             label="Filter Profile:",
-            options=["None", "Shift Right", "Shift Left"],
-            default_option="None"
+            options=FILTER_PROFILES,
+            default_option=DEFAULT_FILTER_PROFILE
         )
         self.profile_dropdown.value_changed.connect(self._on_profile_changed)
         filter_layout.addWidget(self.profile_dropdown)
@@ -109,8 +118,8 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting filter category
         self.category_dropdown = DropdownWidget(
             label="Category:",
-            options=["Linear", "Non-Linear"],
-            default_option="Linear"
+            options=FILTER_CATEGORIES,
+            default_option=DEFAULT_FILTER_CATEGORY
         )
         self.category_dropdown.value_changed.connect(self._on_category_changed)
         filter_layout.addWidget(self.category_dropdown)
@@ -118,8 +127,8 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting filter type
         self.type_dropdown = DropdownWidget(
             label="Type:",
-            options=["Cross-Correlation", "Convolution"],
-            default_option="Cross-Correlation"
+            options=FILTER_TYPES,
+            default_option=DEFAULT_FILTER_TYPE
         )
         self.type_dropdown.value_changed.connect(self._on_type_changed)
         filter_layout.addWidget(self.type_dropdown)
@@ -127,8 +136,8 @@ class ControlPanelWidget(QWidget):
         # Create dropdown widget for selecting specific filter
         self.filter_dropdown = DropdownWidget(
             label="Filter Selection:",
-            options=["Mean", "Custom"],
-            default_option="Mean"
+            options=FILTER_SELECTIONS_LINEAR,
+            default_option=DEFAULT_FILTER_SELECTION
         )
         self.filter_dropdown.value_changed.connect(self._on_filter_changed)
         filter_layout.addWidget(self.filter_dropdown)
@@ -219,46 +228,42 @@ class ControlPanelWidget(QWidget):
     def _on_profile_changed(self, profile: str) -> None:
         self.profile_changed.emit(profile)
         
-        if profile != "None":
+        if profile != DEFAULT_FILTER_PROFILE:
             self.category_dropdown.combobox.setEnabled(False)
             self.filter_dropdown.combobox.setEnabled(False)
             
-            self.category_dropdown.set_value("Linear")
-            self.type_dropdown.set_value("Convolution")
-            self.filter_dropdown.set_value("Custom")
+            self.category_dropdown.set_value(DEFAULT_FILTER_CATEGORY)
+            self.type_dropdown.set_value(PROFILE_FILTER_TYPE)
+            self.filter_dropdown.set_value(PROFILE_FILTER_SELECTION)
             
             self.type_dropdown.combobox.setEnabled(False)
         else:
+            self.category_dropdown.set_value(DEFAULT_FILTER_CATEGORY)
+            self.type_dropdown.set_value(DEFAULT_FILTER_TYPE)
+            self.filter_dropdown.set_value(DEFAULT_FILTER_SELECTION)
+            
             self.category_dropdown.combobox.setEnabled(True)
             self.filter_dropdown.combobox.setEnabled(True)
             
-            current_category = self.category_dropdown.combobox.currentText()
-            current_filter = self.filter_dropdown.combobox.currentText()
-            
-            if current_category == "Non-Linear":
-                self.type_dropdown.combobox.setEnabled(False)
-            elif current_filter == "Mean":
-                self.type_dropdown.combobox.setEnabled(False)
-            else:
-                self.type_dropdown.combobox.setEnabled(True)
+            self.type_dropdown.combobox.setEnabled(False)
     
     def _on_category_changed(self, category: str) -> None:
         self.category_changed.emit(category)
         
         current_profile = self.profile_dropdown.combobox.currentText()
-        if current_profile != "None":
+        if current_profile != DEFAULT_FILTER_PROFILE:
             return
         
         if category == "Non-Linear":
             self.type_dropdown.combobox.setEnabled(False)
             self.filter_dropdown.combobox.clear()
-            self.filter_dropdown.combobox.addItems(["Median"])
-            self.filter_dropdown.combobox.setCurrentText("Median")
+            self.filter_dropdown.combobox.addItems(FILTER_SELECTIONS_NONLINEAR)
+            self.filter_dropdown.combobox.setCurrentText(DEFAULT_NONLINEAR_FILTER)
         else:
             self.type_dropdown.combobox.setEnabled(True)
             self.filter_dropdown.combobox.clear()
-            self.filter_dropdown.combobox.addItems(["Mean", "Custom"])
-            self.filter_dropdown.combobox.setCurrentText("Mean")
+            self.filter_dropdown.combobox.addItems(FILTER_SELECTIONS_LINEAR)
+            self.filter_dropdown.combobox.setCurrentText(DEFAULT_FILTER_SELECTION)
     
     def _on_type_changed(self, type_value: str) -> None:
         self.type_changed.emit(type_value)
@@ -267,14 +272,14 @@ class ControlPanelWidget(QWidget):
         self.filter_changed.emit(filter_value)
         
         current_profile = self.profile_dropdown.combobox.currentText()
-        if current_profile != "None":
+        if current_profile != DEFAULT_FILTER_PROFILE:
             return
         
         current_category = self.category_dropdown.combobox.currentText()
         
         if current_category == "Non-Linear":
             self.type_dropdown.combobox.setEnabled(False)
-        elif filter_value == "Mean":
+        elif filter_value == DEFAULT_FILTER_SELECTION:
             self.type_dropdown.combobox.setEnabled(False)
         else:
             self.type_dropdown.combobox.setEnabled(True)

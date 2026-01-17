@@ -9,7 +9,9 @@ from ui.common.dropdown import DropdownWidget
 from consts import (
     DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
     DEFAULT_CONSTANT_MULTIPLIER, MIN_CONSTANT_MULTIPLIER, MAX_CONSTANT_MULTIPLIER,
-    CONSTANT_MULTIPLIER_STEP, CONSTANT_MULTIPLIER_DECIMALS
+    CONSTANT_MULTIPLIER_STEP, CONSTANT_MULTIPLIER_DECIMALS,
+    DEFAULT_KERNEL_PRESET, KERNEL_PRESETS,
+    DEFAULT_KERNEL_VALUE
 )
 
 class KernelConfigWidget(QFrame):
@@ -70,8 +72,8 @@ class KernelConfigWidget(QFrame):
         # Add kernel preset dropdown to the same group box
         self.kernel_preset_dropdown = DropdownWidget(
             label="Kernel Preset:",
-            options=["None", "Identity"],
-            default_option="None"
+            options=KERNEL_PRESETS,
+            default_option=DEFAULT_KERNEL_PRESET
         )
         self.kernel_preset_dropdown.value_changed.connect(self._on_preset_changed)
         kernel_size_group_layout.addWidget(self.kernel_preset_dropdown)
@@ -114,7 +116,7 @@ class KernelConfigWidget(QFrame):
         # Convert kernel radius (k) to full grid size (2k+1) and update the model
         grid_size = 2 * k + 1
         self._kernel_model.set_grid_size(grid_size)
-        self.kernel_preset_dropdown.set_value("None")
+        self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
     
     def _on_constant_changed(self, value: float) -> None:
         # Update the constant multiplier in the final kernel grid display
@@ -123,8 +125,8 @@ class KernelConfigWidget(QFrame):
     def _on_preset_changed(self, preset_name: str) -> None:
         if preset_name == "Identity":
             self._apply_identity_preset()
-        elif preset_name == "None":
-            self._kernel_model.set_all_values(1.0)
+        elif preset_name == DEFAULT_KERNEL_PRESET:
+            self._kernel_model.set_all_values(DEFAULT_KERNEL_VALUE)
     
     def _apply_identity_preset(self) -> None:
         size = self._kernel_model.get_grid_size()
@@ -136,11 +138,11 @@ class KernelConfigWidget(QFrame):
     
     def set_filter(self, filter_name: str) -> None:
         if filter_name == "Mean":
-            self._kernel_model.set_all_values(1.0)
+            self._kernel_model.set_all_values(DEFAULT_KERNEL_VALUE)
             self.kernel_grid.setEnabled(False)
             self.kernel_grid.setToolTip("Mean filter uses a fixed kernel with all values set to 1")
-            self.constant_input.set_value(1.0)
-            self.kernel_preset_dropdown.set_value("None")
+            self.constant_input.set_value(DEFAULT_CONSTANT_MULTIPLIER)
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
         elif filter_name == "Custom":
             self.kernel_grid.setEnabled(True)
@@ -149,19 +151,19 @@ class KernelConfigWidget(QFrame):
         else:
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")
-            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
     
     def set_profile(self, profile_name: str) -> None:
         if profile_name == "Shift Left":
             self._apply_shift_left_profile()
-            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
         elif profile_name == "Shift Right":
             self._apply_shift_right_profile()
-            self.kernel_preset_dropdown.set_value("None")
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
             self.kernel_preset_dropdown.combobox.setEnabled(False)
-        elif profile_name == "None":
+        elif profile_name == DEFAULT_KERNEL_PRESET:
             self.kernel_preset_dropdown.combobox.setEnabled(True)
     
     def _apply_shift_left_profile(self) -> None:
