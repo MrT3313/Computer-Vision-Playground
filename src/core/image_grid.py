@@ -32,3 +32,8 @@ class ImageGridModel(QObject):
     def clear_grid(self) -> None:
         self._grid_data = self._create_grid(self._size, None)
         self.grid_changed.emit(self._size, self._grid_data)
+    
+    def set_grid_data(self, size: int, grid_data: list[list[int]]) -> None:
+        self._size = size
+        self._grid_data = grid_data
+        self.grid_changed.emit(self._size, self._grid_data)

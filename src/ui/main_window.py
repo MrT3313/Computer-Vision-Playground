@@ -46,9 +46,13 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(10) # Add 10px spacing between left and right sides
         main_layout.setContentsMargins(10, 10, 10, 10) # Add 10px padding on all sides
         
-        # Create the left side (image processing widgets) and right side (control panel)
-        left_widget = self._create_left_side()
+        # Create the right side (control panel) first so it can be passed to left side widgets
         right_widget = self._create_right_side()
+        # Create the left side (image processing widgets) with reference to control panel
+        left_widget = self._create_left_side()
+        
+        # Connect all widget signals now that both sides are created
+        self._connect_widget_signals()
         
         # Wrap left side in scroll area to handle vertical overflow when kernel grows
         left_scroll = QScrollArea()
@@ -100,7 +104,7 @@ class MainWindow(QMainWindow):
         top_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         
         # Create input image widget with coordinator for position tracking
-        self._input_image = InputImageWidget(self._input_model, self._coordinator)
+        self._input_image = InputImageWidget(self._input_model, self._coordinator, self._control_panel)
         # Create kernel configuration widget
         self._kernel_config = KernelConfigWidget()
         # Create output image widget with coordinator for position tracking
@@ -150,6 +154,9 @@ class MainWindow(QMainWindow):
         self._control_panel.grid_size_changed.connect(self._output_model.set_grid_size)
         self._control_panel.grid_size_changed.connect(self._coordinator.set_grid_size)
         
+        return self._control_panel
+    
+    def _connect_widget_signals(self) -> None:
         # Connect input mode changes to update input image editing behavior
         self._control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
         
@@ -206,11 +213,18 @@ class MainWindow(QMainWindow):
         self._control_panel.sigma_changed.connect(self._on_config_changed)
         self._control_panel.normalize_changed.connect(self._on_config_changed)
         
+        # Connect image upload grid size detection to update output model and coordinator
+        # (control panel is updated directly in the widget to avoid race conditions)
+        def update_models_from_image(new_size: int) -> None:
+            # Update output model and coordinator to match the new grid size
+            self._output_model.set_grid_size(new_size)
+            self._coordinator.set_grid_size(new_size)
+        
+        self._input_image.grid_size_detected.connect(update_models_from_image)
+        
         # Initialize kernel config with current filter state now that connections are established
         current_filter = self._control_panel.filter_dropdown.combobox.currentText()
         self._kernel_config.set_filter(current_filter)
-        
-        return self._control_panel
     
     def _on_config_changed(self, *args) -> None:
         if self._coordinator.get_state() == ApplicationState.NAVIGATING:
