@@ -33,7 +33,7 @@ class OutputImageWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         main_layout.setSpacing(0) # Remove spacing between child widgets
         
-        title_bar = TitleBarWidget("3. Output Image: G(i,j)")
+        title_bar = TitleBarWidget("3. Output Image: G")
         
         # Create the content area widget that will hold the pixel grid
         content_area = QWidget()

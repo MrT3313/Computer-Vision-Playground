@@ -187,7 +187,7 @@ class FilterCalculationsWidget(QFrame):
             sorted_str = ", ".join([str(int(v)) for v in sorted_values if v is not None])
             median_index = result.get('median_index', 0)
             median_text = f"Sorted: [{sorted_str}]"
-            result_text = f"Median (index {median_index}): {result['output']:.2f}"
+            result_text = f"Result G(i,j): {result['output']:.2f}"
             full_text = f"{median_text}\n\n{result_text}"
         else:
             # Build text for displaying the sum of all weighted pixel values
@@ -200,13 +200,13 @@ class FilterCalculationsWidget(QFrame):
                 k = kernel_size // 2
                 denominator = (2 * k + 1) ** 2
                 mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
-                result_text = f"Result: {result['output']:.2f}"
+                result_text = f"Result G(i,j): {result['output']:.2f}"
                 full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
             elif self._filter_selection == "Gaussian":
-                result_text = f"Result: {result['output']:.2f}"
+                result_text = f"Result G(i,j): {result['output']:.2f}"
                 full_text = f"{sum_text}\n\n{result_text}"
             elif self._filter_selection == "Custom":
-                result_text = f"Result: {result['output']:.2f}"
+                result_text = f"Result G(i,j): {result['output']:.2f}"
                 full_text = f"{sum_text}\n\n{result_text}"
             else:
                 full_text = sum_text

@@ -47,9 +47,9 @@ class CalculationTableWidget(QWidget):
         # Define the text labels for each row
         row_labels = [
             "",  # Header row (no label)
-            "Coordinates:",
+            "Coordinates: F(i,j)",
             "Values:",
-            "Kernel Adjusted Calculations:",
+            "Kernel Adjusted Calculations: F(i,j) × H(u,v)",
             "Kernel Adjusted Values:",
             "Bounded Values:"
         ]
@@ -141,9 +141,9 @@ class CalculationTableWidget(QWidget):
         # Define the text labels for each row
         row_labels = [
             "",  # Header row (no label)
-            "Coordinates:",
+            "Coordinates: F(i,j)",
             "Values:",
-            "Kernel Adjusted Calculations:",
+            "Kernel Adjusted Calculations: F(i,j) × H(u,v)",
             "Kernel Adjusted Values:",
             "Bounded Values:"
         ]

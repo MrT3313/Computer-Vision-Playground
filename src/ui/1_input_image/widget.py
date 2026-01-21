@@ -45,7 +45,7 @@ class InputImageWidget(QFrame):
         upload_button.setStyleSheet("font-size: 11px; padding: 2px 8px;")
         upload_button.clicked.connect(self._on_upload_clicked)
         
-        title_bar = TitleBarWidget("1. Input Image: F(i,j)", upload_button)
+        title_bar = TitleBarWidget("1. Input Image: F", upload_button)
         
         # Create the content area widget that will hold the pixel grid
         content_area = QWidget()

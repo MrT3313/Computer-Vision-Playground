@@ -38,7 +38,7 @@ class KernelConfigWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         main_layout.setSpacing(0) # Remove spacing between child widgets
         
-        title_bar = TitleBarWidget("2. Kernel Config")
+        title_bar = TitleBarWidget("2. Kernel Config: H")
         
         # Create the content area widget that will hold all kernel configuration controls
         content_area = QWidget()
@@ -52,7 +52,7 @@ class KernelConfigWidget(QFrame):
         kernel_size_group_layout = QVBoxLayout()
         # Create number input widget for kernel size (k) parameter
         self.kernel_size_input = NumberInputWidget(
-            label="Kernel Size (k):",
+            label="Kernel Radius (k):",
             default_value=DEFAULT_KERNEL_SIZE,
             min_value=MIN_KERNEL_SIZE,
             max_value=MAX_KERNEL_SIZE

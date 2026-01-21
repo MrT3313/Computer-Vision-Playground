@@ -61,6 +61,9 @@ class MainWindowSignalConnector:
         self._main_window._control_panel.category_changed.connect(
             self._main_window._filter_calculations.set_category
         )
+        self._main_window._control_panel.category_changed.connect(
+            self._main_window._formula_display.set_category
+        )
         self._main_window._control_panel.type_changed.connect(
             self._main_window._filter_calculations.set_type
         )
