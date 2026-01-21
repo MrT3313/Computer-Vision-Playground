@@ -49,6 +49,8 @@ class FormulaDisplayWidget(QWidget):
             formula = self._create_gaussian_formula()
         elif self._filter_selection == "Custom":
             formula = self._create_custom_formula()
+        elif self._filter_selection == "Median":
+            formula = self._create_median_formula()
         else:
             # Fallback message for unsupported filter types
             formula = "No formula available"
@@ -78,6 +80,11 @@ class FormulaDisplayWidget(QWidget):
         else:
             # Cross-Correlation: G[i,j] = sum H[u,v] F[i+u, j+v]
             return r'$G[i, j] = \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} H[u, v] \cdot F[i + u, j + v]$'
+    
+    def _create_median_formula(self) -> str:
+        # Return the LaTeX string for the median filter formula
+        # G[i,j] = median of all F[i+u, j+v] values in kernel window W
+        return r'$G[i, j] = \text{median}\{F[i+u, j+v] : (u,v) \in W\}$'
     
     def _latex_to_pixmap(self, latex_str: str) -> QPixmap:
         # Convert a LaTeX formula string to a QPixmap image using matplotlib

@@ -175,6 +175,12 @@ class KernelConfigWidget(QFrame):
             self.kernel_grid.setToolTip("")
             self.kernel_preset_dropdown.combobox.setEnabled(True)
             self.gaussian_formula_label.setVisible(False)
+        elif filter_name == "Median":
+            self.kernel_grid.setEnabled(False)
+            self.kernel_grid.setToolTip("Median filter uses kernel size/shape only, individual kernel values are ignored")
+            self.kernel_preset_dropdown.set_value(DEFAULT_KERNEL_PRESET)
+            self.kernel_preset_dropdown.combobox.setEnabled(False)
+            self.gaussian_formula_label.setVisible(False)
         else:
             self.kernel_grid.setEnabled(True)
             self.kernel_grid.setToolTip("")

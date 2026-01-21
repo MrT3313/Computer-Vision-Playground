@@ -4,6 +4,7 @@ from core import ApplicationState
 from core.filter_calculators.mean_filter import MeanFilterCalculator
 from core.filter_calculators.custom_filter import CustomFilterCalculator
 from core.filter_calculators.gaussian_filter import GaussianFilterCalculator
+from core.filter_calculators.median_filter import MedianFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
 from .formula_display_widget import FormulaDisplayWidget
 
@@ -141,6 +142,8 @@ class FilterCalculationsWidget(QFrame):
             self._calculator = GaussianFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
         elif filter_name == "Custom":
             self._calculator = CustomFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
+        elif filter_name == "Median":
+            self._calculator = MedianFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
         # Recalculate and update the display with the new filter
         self._update_display()
     
@@ -195,34 +198,43 @@ class FilterCalculationsWidget(QFrame):
             result = self._calculator.calculate(self._constant)
         elif self._filter_selection == "Custom":
             result = self._calculator.calculate(self._constant, self._filter_type)
+        elif self._filter_selection == "Median":
+            result = self._calculator.calculate(self._constant)
         else:
             return
         
         # Update the calculation table with step-by-step computation details
         self._table_widget.set_calculations(result['calculations'])
         
-        # Build text for displaying the sum of all weighted pixel values
-        calculations = result['calculations']
-        sum_parts = " + ".join([f"{c['bounded_result']:.2f}" for c in calculations])
-        sum_text = f"Sum: {sum_parts} = {result['total_sum']:.2f}"
-        
         # Build result text based on filter type
-        if self._filter_selection == "Mean":
-            kernel_size = self._kernel_model.get_grid_size()
-            k = kernel_size // 2
-            denominator = (2 * k + 1) ** 2
-            mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
-            result_text = f"Result: {result['output']:.2f}"
-            full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
-        elif self._filter_selection == "Gaussian":
-            result_text = f"Result: {result['output']:.2f}"
-            full_text = f"{sum_text}\n\n{result_text}"
-        elif self._filter_selection == "Custom":
-            # For Custom filter, output is just the sum
-            result_text = f"Result: {result['output']:.2f}"
-            full_text = f"{sum_text}\n\n{result_text}"
+        if self._filter_selection == "Median":
+            sorted_values = result.get('sorted_values', [])
+            sorted_str = ", ".join([str(int(v)) for v in sorted_values if v is not None])
+            median_index = result.get('median_index', 0)
+            median_text = f"Sorted: [{sorted_str}]"
+            result_text = f"Median (index {median_index}): {result['output']:.2f}"
+            full_text = f"{median_text}\n\n{result_text}"
         else:
-            full_text = sum_text
+            # Build text for displaying the sum of all weighted pixel values
+            calculations = result['calculations']
+            sum_parts = " + ".join([f"{c['bounded_result']:.2f}" for c in calculations])
+            sum_text = f"Sum: {sum_parts} = {result['total_sum']:.2f}"
+            
+            if self._filter_selection == "Mean":
+                kernel_size = self._kernel_model.get_grid_size()
+                k = kernel_size // 2
+                denominator = (2 * k + 1) ** 2
+                mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
+                result_text = f"Result: {result['output']:.2f}"
+                full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
+            elif self._filter_selection == "Gaussian":
+                result_text = f"Result: {result['output']:.2f}"
+                full_text = f"{sum_text}\n\n{result_text}"
+            elif self._filter_selection == "Custom":
+                result_text = f"Result: {result['output']:.2f}"
+                full_text = f"{sum_text}\n\n{result_text}"
+            else:
+                full_text = sum_text
         
         self._result_label.setText(full_text)
         
