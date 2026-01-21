@@ -33,12 +33,28 @@ class CustomFilterCalculator:
         
         # Iterate through each cell affected by the kernel
         for idx, (row, col) in enumerate(affected_cells):
-            # Get the input pixel value at this position
-            input_value = input_data[row][col]
-            
             # Calculate the offset from the output cell to map to kernel coordinates
             offset_row = row - output_cell[0]
             offset_col = col - output_cell[1]
+            
+            # For convolution, we need to access input cells at (i - u, j - v) instead of (i + u, j + v)
+            # So we negate the offsets to get the correct input cell position
+            if filter_type == "Convolution":
+                input_row = output_cell[0] - offset_row
+                input_col = output_cell[1] - offset_col
+            else:
+                # For cross-correlation, use the cell position directly (i + u, j + v)
+                input_row = row
+                input_col = col
+            
+            # Check bounds for the input cell (important for convolution which may go out of bounds)
+            if 0 <= input_row < len(input_data) and 0 <= input_col < len(input_data[0]):
+                # Get the input pixel value at this position
+                input_value = input_data[input_row][input_col]
+            else:
+                # For out-of-bounds cells, use 0 (zero padding)
+                input_value = 0
+            
             # Convert offset to kernel array indices (kernel center is at kernel_size // 2)
             kernel_row = offset_row + (kernel_size // 2)
             kernel_col = offset_col + (kernel_size // 2)
@@ -56,7 +72,7 @@ class CustomFilterCalculator:
             # Store detailed calculation information for this cell
             calculations.append({
                 'index': idx,  # Sequential index of this calculation
-                'coordinate': (row, col),  # Grid position of input cell
+                'coordinate': (input_row, input_col),  # Grid position of input cell (may differ for convolution)
                 'input_value': input_value,  # Original input pixel value
                 'kernel_value': kernel_value,  # Base kernel weight (possibly flipped)
                 'constant': constant,  # Constant multiplier

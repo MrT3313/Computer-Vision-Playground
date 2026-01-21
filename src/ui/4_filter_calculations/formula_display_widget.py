@@ -45,8 +45,8 @@ class FormulaDisplayWidget(QWidget):
         if self._filter_selection == "Mean":
             formula = self._create_mean_formula()
         elif self._filter_selection == "Gaussian":
-            # Gaussian filter respects Type selection (same as Custom)
-            formula = self._create_custom_formula()
+            # Gaussian filter always uses cross-correlation (implementation doesn't support filter_type)
+            formula = self._create_gaussian_formula()
         elif self._filter_selection == "Custom":
             formula = self._create_custom_formula()
         else:
@@ -63,6 +63,11 @@ class FormulaDisplayWidget(QWidget):
         # (2k+1)^2 = kernel area (total number of elements)
         # F(u+i, v+j) = input pixel values within kernel window
         return r'$G(i,j) = \frac{1}{(2k + 1)^2} \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} F(u+i, v+j)$'
+    
+    def _create_gaussian_formula(self) -> str:
+        # Return the LaTeX string for the Gaussian filter formula
+        # Gaussian filter always uses cross-correlation (symmetric kernels make convolution equivalent)
+        return r'$G[i, j] = \sum_{u=-k}^{k} \,\, \sum_{v=-k}^{k} H[u, v] \cdot F[i + u, j + v]$'
     
     def _create_custom_formula(self) -> str:
         # Return the LaTeX string for the custom filter formula

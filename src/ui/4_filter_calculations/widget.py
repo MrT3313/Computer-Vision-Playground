@@ -152,6 +152,8 @@ class FilterCalculationsWidget(QFrame):
     def set_type(self, filter_type: str) -> None:
         # Update the filter type and refresh the display
         self._filter_type = filter_type
+        # Update the formula display to show the correct formula for the filter type
+        self._formula_widget.set_filter_type(filter_type)
         self._update_display()
     
     def set_constant(self, constant: float) -> None:
