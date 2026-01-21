@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox
-from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox, QGridLayout
+from PySide6.QtCore import Signal, QTimer
 from consts import (
     DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE,
     DEFAULT_INPUT_MODE, INPUT_MODES,
@@ -182,26 +182,61 @@ class ControlPanelWidget(QWidget):
         self.start_button.clicked.connect(self._on_start_clicked)
         nav_layout.addWidget(self.start_button)
         
-        # Create horizontal layout for Reset, Previous, and Next buttons
-        nav_buttons_layout = QHBoxLayout()
+        # Create Play button for INITIAL state (below Start)
+        self.play_button_initial = QPushButton("Play")
+        self.play_button_initial.clicked.connect(self._on_play_clicked)
+        nav_layout.addWidget(self.play_button_initial)
         
-        # Create Reset button to return to initial state
-        self.reset_button = QPushButton("Reset")
-        self.reset_button.clicked.connect(self._on_reset_clicked)
-        nav_buttons_layout.addWidget(self.reset_button)
+        # Create grid layout for navigation buttons in NAVIGATING state
+        nav_buttons_layout = QGridLayout()
         
         # Create Previous button to navigate backwards
         self.previous_button = QPushButton("Previous")
         self.previous_button.clicked.connect(self._on_previous_clicked)
-        nav_buttons_layout.addWidget(self.previous_button)
+        nav_buttons_layout.addWidget(self.previous_button, 0, 0)
         
         # Create Next button to navigate forwards
         self.next_button = QPushButton("Next")
         self.next_button.clicked.connect(self._on_next_clicked)
-        nav_buttons_layout.addWidget(self.next_button)
+        nav_buttons_layout.addWidget(self.next_button, 0, 1)
+        
+        # Create Reset button to return to initial state
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.clicked.connect(self._on_reset_clicked)
+        nav_buttons_layout.addWidget(self.reset_button, 1, 0)
+        
+        # Create Play button for NAVIGATING state
+        self.play_button_navigating = QPushButton("Play")
+        self.play_button_navigating.clicked.connect(self._on_play_clicked)
+        nav_buttons_layout.addWidget(self.play_button_navigating, 1, 1)
+        
+        # Create Pause button (initially hidden)
+        self.pause_button = QPushButton("Pause")
+        self.pause_button.clicked.connect(self._on_pause_clicked)
+        nav_buttons_layout.addWidget(self.pause_button, 1, 1)
+        self.pause_button.setVisible(False)
         
         # Add the navigation buttons layout to the navigation group layout
         nav_layout.addLayout(nav_buttons_layout)
+        
+        # Create speed input for controlling auto-progression speed
+        self.speed_input = NumberInputWidget(
+            label="Speed:",
+            default_value=0.5,
+            min_value=0.1,
+            max_value=10.0,
+            step=0.1,
+            decimals=1
+        )
+        self.speed_input.setVisible(False)
+        self.speed_input.value_changed.connect(self._on_speed_changed)
+        nav_layout.addWidget(self.speed_input)
+        
+        # Create timer for auto-progression
+        self._play_timer = QTimer()
+        self._play_timer.setSingleShot(False)
+        self._play_timer.timeout.connect(self._on_play_timer_timeout)
+        self._play_timer.setInterval(500)
         nav_group.setLayout(nav_layout)
         
         # Add the navigation group to the main layout
@@ -209,6 +244,7 @@ class ControlPanelWidget(QWidget):
         
         # Set initial button visibility based on application state
         self._update_button_visibility()
+        self._update_play_pause_buttons()
         
         # Set initial Type dropdown state based on default filter selection (Mean)
         self.type_dropdown.combobox.setEnabled(False)
@@ -235,6 +271,50 @@ class ControlPanelWidget(QWidget):
         # Navigate to next position when Next button is clicked
         if self._coordinator:
             self._coordinator.next()
+    
+    def _on_play_clicked(self) -> None:
+        # Start auto-progression when Play button is clicked
+        if not self._coordinator:
+            return
+        
+        from core import ApplicationState
+        # If in INITIAL state, start navigation first
+        if self._coordinator.get_state() == ApplicationState.INITIAL:
+            self._coordinator.start()
+        
+        # Update timer interval to current speed value before starting
+        speed = self.speed_input.value()
+        interval_ms = int(speed * 1000)
+        self._play_timer.setInterval(interval_ms)
+        
+        # Start the timer for auto-progression
+        if not self._play_timer.isActive():
+            self._play_timer.start()
+            self._update_play_pause_buttons()
+    
+    def _on_pause_clicked(self) -> None:
+        # Pause auto-progression when Pause button is clicked
+        if self._play_timer.isActive():
+            self._play_timer.stop()
+            self._update_play_pause_buttons()
+            self._update_button_states()
+    
+    def _on_play_timer_timeout(self) -> None:
+        # Auto-advance to next position when timer fires
+        if not self._coordinator:
+            self._play_timer.stop()
+            self._update_play_pause_buttons()
+            self._update_button_states()
+            return
+        
+        # Check if we can go to the next position
+        if self._coordinator.can_go_next():
+            self._coordinator.next()
+        else:
+            # Reached the end, stop the timer
+            self._play_timer.stop()
+            self._update_play_pause_buttons()
+            self._update_button_states()
     
     def _on_show_pixel_values_changed(self, state: int) -> None:
         # Show or hide the pixel values in the pixel grid
@@ -326,14 +406,37 @@ class ControlPanelWidget(QWidget):
         is_checked = state == 2
         self.normalize_changed.emit(is_checked)
     
+    def _on_speed_changed(self, speed: float) -> None:
+        # Update timer interval when speed changes
+        interval_ms = int(speed * 1000)
+        was_active = self._play_timer.isActive()
+        
+        # If timer is running, restart it with new interval for immediate effect
+        if was_active:
+            self._play_timer.stop()
+            self._play_timer.setInterval(interval_ms)
+            self._play_timer.start()
+        else:
+            # Just update interval if timer is not running
+            self._play_timer.setInterval(interval_ms)
+    
     def _on_state_changed(self, state) -> None:
+        # Stop play timer if it's running when state changes
+        if self._play_timer.isActive():
+            self._play_timer.stop()
         # Update UI when application state changes
         self._update_button_visibility()  # Show/hide buttons based on state
         self._update_button_states()  # Enable/disable buttons based on navigation availability
+        self._update_play_pause_buttons()  # Update play/pause button visibility
     
     def _on_position_changed(self, row: int, col: int) -> None:
         # Update button enabled/disabled states when position changes during navigation
         self._update_button_states()
+        # Stop timer if we've reached the end and timer is still running
+        if self._play_timer.isActive() and self._coordinator and not self._coordinator.can_go_next():
+            self._play_timer.stop()
+            self._update_play_pause_buttons()
+            self._update_button_states()
     
     def _update_button_visibility(self) -> None:
         # Show/hide navigation buttons based on current application state
@@ -344,19 +447,75 @@ class ControlPanelWidget(QWidget):
         # Check if currently in INITIAL state
         is_initial = self._coordinator.get_state() == ApplicationState.INITIAL
         
-        # In INITIAL state: show Start button, hide navigation buttons
-        # In NAVIGATING state: hide Start button, show navigation buttons
+        # In INITIAL state: show Start button and play button below it, hide navigation buttons
+        # In NAVIGATING state: hide Start button and play button below it, show navigation buttons
         self.start_button.setVisible(is_initial)
+        self.play_button_initial.setVisible(is_initial)
         self.reset_button.setVisible(not is_initial)
         self.previous_button.setVisible(not is_initial)
         self.next_button.setVisible(not is_initial)
+        # Hide play/pause buttons from grid layout in INITIAL state
+        if is_initial:
+            self.play_button_navigating.setVisible(False)
+            self.pause_button.setVisible(False)
+    
+    def _update_play_pause_buttons(self) -> None:
+        # Update play/pause button visibility based on timer state
+        if not self._coordinator:
+            return
+        
+        from core import ApplicationState
+        # Only show play/pause buttons in NAVIGATING state
+        if self._coordinator.get_state() != ApplicationState.NAVIGATING:
+            self.speed_input.setVisible(False)
+            return
+        
+        is_playing = self._play_timer.isActive()
+        # Show pause button when playing, show play button when not playing
+        self.pause_button.setVisible(is_playing)
+        self.play_button_navigating.setVisible(not is_playing)
+        
+        # Show speed input when playing
+        self.speed_input.setVisible(is_playing)
+        
+        # Disable Previous and Next buttons when playing
+        self.previous_button.setEnabled(not is_playing)
+        self.next_button.setEnabled(not is_playing)
+        
+        # Set tooltips for disabled state
+        if is_playing:
+            self.previous_button.setToolTip("Previous is disabled while auto-progression is active")
+            self.next_button.setToolTip("Next is disabled while auto-progression is active")
+        else:
+            self.previous_button.setToolTip("")
+            self.next_button.setToolTip("")
     
     def _update_button_states(self) -> None:
         # Enable/disable Previous and Next buttons based on navigation boundaries
         if not self._coordinator:
             return
         
-        # Disable Previous button if at the start position
-        self.previous_button.setEnabled(self._coordinator.can_go_previous())
-        # Disable Next button if at the end position
-        self.next_button.setEnabled(self._coordinator.can_go_next())
+        from core import ApplicationState
+        is_initial = self._coordinator.get_state() == ApplicationState.INITIAL
+        
+        # If play is active, buttons should be disabled (handled by _update_play_pause_buttons)
+        is_playing = self._play_timer.isActive()
+        if is_playing:
+            self.previous_button.setEnabled(False)
+            self.next_button.setEnabled(False)
+            return
+        
+        # In INITIAL state, play button should always be enabled (can start)
+        if is_initial:
+            self.play_button_initial.setEnabled(True)
+        else:
+            # In NAVIGATING state, disable Previous button if at the start position
+            can_go_previous = self._coordinator.can_go_previous()
+            self.previous_button.setEnabled(can_go_previous)
+            
+            # Disable Next button if at the end position
+            can_go_next = self._coordinator.can_go_next()
+            self.next_button.setEnabled(can_go_next)
+            
+            # Disable play button if at the end (no next position available)
+            self.play_button_navigating.setEnabled(can_go_next)
