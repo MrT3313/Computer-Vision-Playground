@@ -1,9 +1,10 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
 from PySide6.QtCore import Qt, QSize
 from utils.latex_renderer import render_latex_to_pixmap
+from ui.common.title_bar_widget import TitleBarWidget
 
 
-class FormulaDisplayWidget(QWidget):
+class FormulaDisplayWidget(QFrame):
     def __init__(self):
         super().__init__()
         # Store the current filter selection (e.g., "Mean", "Custom", etc.)
@@ -13,14 +14,30 @@ class FormulaDisplayWidget(QWidget):
         self._setup_ui()
     
     def _setup_ui(self):
-        # Create vertical layout for the formula display
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)  # Add 10px padding on all sides
+        # Configure the frame's visual appearance with a box border
+        self.setFrameShape(QFrame.Shape.Box)
+        self.setLineWidth(2)  # Set border thickness to 2 pixels
+        
+        # Create the main vertical layout that will contain all child widgets
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)  # Remove padding around edges
+        main_layout.setSpacing(0)  # Remove spacing between child widgets
+        
+        title_bar = TitleBarWidget("4. Display Formula")
+        
+        # Create the content area widget
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(10, 10, 10, 10)  # Add 10px padding on all sides
         
         # Create label to display the rendered formula image
         self._formula_label = QLabel()
         self._formula_label.setAlignment(Qt.AlignmentFlag.AlignCenter)  # Center the formula image
-        layout.addWidget(self._formula_label)
+        content_layout.addWidget(self._formula_label)
+        
+        # Add both the title bar and content area to the main layout
+        main_layout.addWidget(title_bar)  # Title bar at the top
+        main_layout.addWidget(content_widget, 1)  # Content area below with stretch factor 1
         
         # Render the initial formula
         self._render_formula()

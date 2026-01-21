@@ -21,6 +21,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Computer Vision Playground")
         # Set minimum window dimensions to ensure adequate space for all components
         self.setMinimumSize(1200, 800)
+        # Set initial window size to prevent vertical scrolling when calculations are displayed
+        self.resize(1200, 1000)
         
         # Create the input image model with default grid size
         self._input_model = ImageGridModel(DEFAULT_GRID_SIZE)
@@ -83,12 +85,14 @@ class MainWindow(QMainWindow):
         input_image_module = importlib.import_module('ui.1_input_image')
         kernel_config_module = importlib.import_module('ui.2_kernel_config')
         output_image_module = importlib.import_module('ui.3_output_image')
-        filter_calculations_module = importlib.import_module('ui.4_filter_calculations')
+        display_formula_module = importlib.import_module('ui.4_display_formula')
+        filter_calculations_module = importlib.import_module('ui.5_filter_calculations')
         
         # Create instances of the imported widget classes
         InputImageWidget = input_image_module.InputImageWidget
         KernelConfigWidget = kernel_config_module.KernelConfigWidget
         OutputImageWidget = output_image_module.OutputImageWidget
+        FormulaDisplayWidget = display_formula_module.FormulaDisplayWidget
         FilterCalculationsWidget = filter_calculations_module.FilterCalculationsWidget
         
         # Create container widget with vertical layout for top/bottom sections
@@ -115,6 +119,9 @@ class MainWindow(QMainWindow):
         top_layout.addWidget(self._kernel_config, 0)
         top_layout.addWidget(self._output_image, 1)
         
+        # Create formula display widget
+        self._formula_display = FormulaDisplayWidget()
+        
         # Create filter calculations widget for detailed computation display
         self._filter_calculations = FilterCalculationsWidget(
             self._input_model,
@@ -123,8 +130,9 @@ class MainWindow(QMainWindow):
             self._output_model
         )
         
-        # Add top row and calculations to left layout (top: 1, calculations: 0 = fixed height)
+        # Add top row, formula display, and calculations to left layout (top: 1, formula: 0, calculations: 0 = fixed height)
         left_layout.addWidget(top_row, 1)
+        left_layout.addWidget(self._formula_display, 0)
         left_layout.addWidget(self._filter_calculations, 0)
         
         return left_widget
@@ -139,7 +147,7 @@ class MainWindow(QMainWindow):
 
         # Import UI modules dynamically to handle numeric prefixes in filenames
         import importlib
-        control_panel_module = importlib.import_module('ui.5_control_panel')
+        control_panel_module = importlib.import_module('ui.6_control_panel')
         
         # Create instance of the imported control panel class
         ControlPanelWidget = control_panel_module.ControlPanelWidget

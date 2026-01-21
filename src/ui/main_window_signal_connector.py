@@ -68,7 +68,10 @@ class MainWindowSignalConnector:
             self._main_window._kernel_config.final_kernel_grid.set_filter_type
         )
         self._main_window._control_panel.type_changed.connect(
-            self._main_window._filter_calculations._formula_widget.set_filter_type
+            self._main_window._formula_display.set_filter_type
+        )
+        self._main_window._control_panel.filter_changed.connect(
+            self._main_window._formula_display.set_filter
         )
     
     def _connect_calculation_signals(self) -> None:

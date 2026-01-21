@@ -60,7 +60,7 @@ class ControlPanelWidget(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        title_bar = TitleBarWidget("5. Control Panel")
+        title_bar = TitleBarWidget("6. Control Panel")
         layout.addWidget(title_bar)
         
         content_widget = QWidget()
@@ -201,11 +201,11 @@ class ControlPanelWidget(QFrame):
         
         self.speed_input = NumberInputWidget(
             label="Speed:",
-            default_value=0.5,
+            default_value=0.25,
             min_value=0.1,
             max_value=10.0,
             step=0.1,
-            decimals=1
+            decimals=2
         )
         self.speed_input.setVisible(False)
         self.speed_input.value_changed.connect(self._on_speed_changed)

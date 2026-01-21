@@ -6,7 +6,6 @@ from core.filter_calculators.custom_filter import CustomFilterCalculator
 from core.filter_calculators.gaussian_filter import GaussianFilterCalculator
 from core.filter_calculators.median_filter import MedianFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
-from .formula_display_widget import FormulaDisplayWidget
 from ui.common.title_bar_widget import TitleBarWidget
 
 
@@ -46,7 +45,7 @@ class FilterCalculationsWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0)  # Remove padding around edges
         main_layout.setSpacing(0)  # Remove spacing between child widgets
         
-        title_bar = TitleBarWidget("4. Filter Calculations")
+        title_bar = TitleBarWidget("5. Filter Calculations")
         
         # Create the content area widget that will hold all filter calculation components
         self._content_area = QWidget()
@@ -57,9 +56,6 @@ class FilterCalculationsWidget(QFrame):
         # Create placeholder label shown when no calculations are active
         self._placeholder_label = QLabel("Click 'Start' to begin calculations")
         self._placeholder_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # Create widget to display the mathematical formula for the current filter
-        self._formula_widget = FormulaDisplayWidget()
         
         # Create scroll area to contain the calculation table (allows horizontal scrolling)
         self._scroll_area = QScrollArea()
@@ -77,7 +73,6 @@ class FilterCalculationsWidget(QFrame):
         self._scroll_area.resizeEvent = self._on_scroll_area_resize
         
         # Add all widgets to the content layout
-        content_layout.addWidget(self._formula_widget, 0)  # Stretch factor 0 = fixed height
         content_layout.addWidget(self._placeholder_label)
         content_layout.addWidget(self._scroll_area, 1)  # Stretch factor 1 = expandable
         
@@ -103,24 +98,20 @@ class FilterCalculationsWidget(QFrame):
         self._table_widget.resize(viewport_width, self._table_widget.height())
     
     def _show_placeholder(self):
-        # Show the placeholder message and hide calculation content (but keep formula visible)
+        # Show the placeholder message and hide calculation content
         self._placeholder_label.setVisible(True)
-        self._formula_widget.setVisible(True)
         self._scroll_area.setVisible(False)
         self._result_label.setVisible(False)
     
     def _show_content(self):
         # Show the calculation content and hide the placeholder message
         self._placeholder_label.setVisible(False)
-        self._formula_widget.setVisible(True)
         self._scroll_area.setVisible(True)
         self._result_label.setVisible(True)
     
     def set_filter(self, filter_name: str) -> None:
         # Update the filter selection and refresh the display
         self._filter_selection = filter_name
-        # Update the formula display to show the new filter's equation
-        self._formula_widget.set_filter(filter_name)
         # Create appropriate calculator based on filter selection
         if filter_name == "Mean":
             self._calculator = MeanFilterCalculator(self._input_model, self._kernel_model, self._coordinator)
@@ -141,8 +132,6 @@ class FilterCalculationsWidget(QFrame):
     def set_type(self, filter_type: str) -> None:
         # Update the filter type and refresh the display
         self._filter_type = filter_type
-        # Update the formula display to show the correct formula for the filter type
-        self._formula_widget.set_filter_type(filter_type)
         self._update_display()
     
     def set_constant(self, constant: float) -> None:
