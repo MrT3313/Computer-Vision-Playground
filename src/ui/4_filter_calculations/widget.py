@@ -1,9 +1,9 @@
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QScrollArea, QWidget
 from PySide6.QtCore import Qt
 from core import ApplicationState
-from core.mean_filter_calculator import MeanFilterCalculator
-from core.custom_filter_calculator import CustomFilterCalculator
-from core.gaussian_filter_calculator import GaussianFilterCalculator
+from core.filter_calculators.mean_filter import MeanFilterCalculator
+from core.filter_calculators.custom_filter import CustomFilterCalculator
+from core.filter_calculators.gaussian_filter import GaussianFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
 from .formula_display_widget import FormulaDisplayWidget
 
