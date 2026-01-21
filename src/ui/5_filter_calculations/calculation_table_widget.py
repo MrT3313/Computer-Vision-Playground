@@ -13,7 +13,7 @@ class CalculationTableWidget(QWidget):
         # List storing the width of each column (one per affected cell)
         self._cell_widths = []
         # Height of each row in pixels
-        self._cell_height = 30
+        self._cell_height = 22
         # Total number of rows in the table (header + 5 data rows)
         self._row_count = 6
         # Set minimum height based on number of rows
@@ -47,10 +47,10 @@ class CalculationTableWidget(QWidget):
         # Define the text labels for each row
         row_labels = [
             "",  # Header row (no label)
-            "Coordinates: F(i,j)",
-            "Values:",
-            "Kernel Adjusted Calculations: F(i,j) × H(u,v)",
-            "Kernel Adjusted Values:",
+            "Coordinates F(i,j):",
+            "Value:",
+            "Calculation F(i,j) × H(u,v):",
+            "Adjusted Values:",
             "Bounded Values:"
         ]
         
@@ -60,12 +60,12 @@ class CalculationTableWidget(QWidget):
         # Find the maximum width needed for row labels
         max_label_width = 0
         for label in row_labels:
-            # Add extra spacing after label text
-            label_width = bold_metrics.horizontalAdvance(label + "  ")
+            # Add minimal spacing after label text
+            label_width = bold_metrics.horizontalAdvance(label + " ")
             max_label_width = max(max_label_width, label_width)
         
-        # Set label column width with additional padding
-        self._label_width = max_label_width + 20
+        # Set label column width with reduced padding
+        self._label_width = max_label_width + 10
         
         # Create font metrics for measuring regular text
         metrics = QFontMetrics(font)
@@ -80,7 +80,7 @@ class CalculationTableWidget(QWidget):
                 str(calc['index']),  # Row 0: Cell index
                 f"({calc['coordinate'][0]},{calc['coordinate'][1]})",  # Row 1: Coordinates
                 str(calc['input_value']),  # Row 2: Input pixel value
-                f"({calc['input_value']}×{calc['final_kernel_value']:.2f})",  # Row 3: Calculation expression
+                f"{calc['input_value']}×{calc['final_kernel_value']:.2f}",  # Row 3: Calculation expression
                 f"{calc['result']:.2f}",  # Row 4: Raw result
                 f"{calc['bounded_result']:.2f}"  # Row 5: Bounded result
             ]
@@ -141,10 +141,10 @@ class CalculationTableWidget(QWidget):
         # Define the text labels for each row
         row_labels = [
             "",  # Header row (no label)
-            "Coordinates: F(i,j)",
-            "Values:",
-            "Kernel Adjusted Calculations: F(i,j) × H(u,v)",
-            "Kernel Adjusted Values:",
+            "Coordinates F(i,j):",
+            "Value:",
+            "Calculation F(i,j) × H(u,v):",
+            "Adjusted Values:",
             "Bounded Values:"
         ]
         
@@ -165,8 +165,8 @@ class CalculationTableWidget(QWidget):
             # Use bold font for labels
             painter.setFont(bold_font)
             painter.setPen(QPen(label_text_color))
-            # Draw label text right-aligned with padding
-            painter.drawText(0, y, self._label_width - 10, self._cell_height,
+            # Draw label text right-aligned with reduced padding
+            painter.drawText(0, y, self._label_width - 5, self._cell_height,
                            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter,
                            row_labels[row_idx])
         
@@ -202,7 +202,7 @@ class CalculationTableWidget(QWidget):
                     text = str(calc['input_value'])
                 elif row_idx == 3:
                     # Row 3: Calculation expression (input × kernel weight)
-                    text = f"({calc['input_value']}×{calc['final_kernel_value']:.2f})"
+                    text = f"{calc['input_value']}×{calc['final_kernel_value']:.2f}"
                 elif row_idx == 4:
                     # Row 4: Raw calculation result
                     text = f"{calc['result']:.2f}"

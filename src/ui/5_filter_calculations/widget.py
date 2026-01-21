@@ -51,7 +51,7 @@ class FilterCalculationsWidget(QFrame):
         self._content_area = QWidget()
         content_layout = QVBoxLayout(self._content_area)
         content_layout.setContentsMargins(10, 10, 10, 10)  # Add 10px padding on all sides
-        content_layout.setSpacing(10)  # Add 10px spacing between widgets
+        content_layout.setSpacing(3)  # Add 3px spacing between widgets
         
         # Create placeholder label shown when no calculations are active
         self._placeholder_label = QLabel("Click 'Start' to begin calculations")
@@ -63,8 +63,6 @@ class FilterCalculationsWidget(QFrame):
         self._scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)  # Show horizontal scrollbar when needed
         self._scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)  # Never show vertical scrollbar
         self._scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)  # Remove scroll area border
-        self._scroll_area.setMinimumHeight(200)  # Set minimum height for table area
-        self._scroll_area.setMaximumHeight(200)  # Set maximum height to prevent vertical expansion
         
         # Create the calculation table widget that displays step-by-step computations
         self._table_widget = CalculationTableWidget()
@@ -78,8 +76,9 @@ class FilterCalculationsWidget(QFrame):
         
         # Create label to display the final calculation result
         self._result_label = QLabel()
-        self._result_label.setStyleSheet("color: white; font-size: 13px; font-weight: bold; padding: 10px;")
+        self._result_label.setStyleSheet("color: white; font-size: 13px; font-weight: bold; padding: 10px; padding-top: 0px;")
         self._result_label.setWordWrap(True)  # Allow text to wrap to multiple lines
+        self._result_label.setTextFormat(Qt.TextFormat.RichText)  # Enable HTML formatting
         content_layout.addWidget(self._result_label, 0)  # Stretch factor 0 = fixed height
         
         # Add both the title bar and content area to the main layout
@@ -180,6 +179,12 @@ class FilterCalculationsWidget(QFrame):
         
         # Update the calculation table with step-by-step computation details
         self._table_widget.set_calculations(result['calculations'])
+        # Update scroll area height to match table height (remove wasted space)
+        table_height = self._table_widget.height()
+        if table_height == 0:
+            table_height = self._table_widget.sizeHint().height()
+        if table_height > 0:
+            self._scroll_area.setFixedHeight(table_height + 20)
         
         # Build result text based on filter type
         if self._filter_selection == "Median":
@@ -188,7 +193,7 @@ class FilterCalculationsWidget(QFrame):
             median_index = result.get('median_index', 0)
             median_text = f"Sorted: [{sorted_str}]"
             result_text = f"Result G(i,j): {result['output']:.2f}"
-            full_text = f"{median_text}\n\n{result_text}"
+            full_text = f'<p style="margin: 0; line-height: 1.4;">{median_text}</p><p style="margin: 0; line-height: 1.4;">{result_text}</p>'
         else:
             # Build text for displaying the sum of all weighted pixel values
             calculations = result['calculations']
@@ -201,15 +206,15 @@ class FilterCalculationsWidget(QFrame):
                 denominator = (2 * k + 1) ** 2
                 mean_text = f"Mean: 1/(2k+1)² × {result['total_sum']:.2f} = 1/{denominator} × {result['total_sum']:.2f} = {result['output']:.2f}"
                 result_text = f"Result G(i,j): {result['output']:.2f}"
-                full_text = f"{sum_text}\n\n{mean_text}\n\n{result_text}"
+                full_text = f'<p style="margin: 0; line-height: 1.4;">{sum_text}</p><p style="margin: 0; line-height: 1.4;">{mean_text}</p><p style="margin: 0; line-height: 1.4;">{result_text}</p>'
             elif self._filter_selection == "Gaussian":
                 result_text = f"Result G(i,j): {result['output']:.2f}"
-                full_text = f"{sum_text}\n\n{result_text}"
+                full_text = f'<p style="margin: 0; line-height: 1.4;">{sum_text}</p><p style="margin: 0; line-height: 1.4;">{result_text}</p>'
             elif self._filter_selection == "Custom":
                 result_text = f"Result G(i,j): {result['output']:.2f}"
-                full_text = f"{sum_text}\n\n{result_text}"
+                full_text = f'<p style="margin: 0; line-height: 1.4;">{sum_text}</p><p style="margin: 0; line-height: 1.4;">{result_text}</p>'
             else:
-                full_text = sum_text
+                full_text = f'<p style="margin: 0; line-height: 1.4;">{sum_text}</p>'
         
         self._result_label.setText(full_text)
         
