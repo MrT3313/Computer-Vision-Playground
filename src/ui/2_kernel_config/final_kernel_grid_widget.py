@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QSizePolicy
 from PySide6.QtCore import Qt, QRect, QSize
 from PySide6.QtGui import QPainter, QPen, QColor, QFont
 from consts import DEFAULT_KERNEL_CELL_SIZE
+from utils.kernel_utils import flip_kernel_180
 
 
 class FinalKernelGridWidget(QWidget):
@@ -68,11 +69,8 @@ class FinalKernelGridWidget(QWidget):
         if grid_size == 0:
             return
         
-        # Flip kernel data if filter type is Convolution
         if self._filter_type == "Convolution":
-            grid_data = [[grid_data[grid_size - 1 - row][grid_size - 1 - col] 
-                         for col in range(grid_size)] 
-                        for row in range(grid_size)]
+            grid_data = flip_kernel_180(grid_data)
         
         # Configure pen for drawing cell borders
         border_color = QColor(150, 150, 150)

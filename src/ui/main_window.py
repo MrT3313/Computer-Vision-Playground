@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QS
 from PySide6.QtCore import Qt
 from core import ImageGridModel, KernelApplicationCoordinator, ApplicationState
 from consts import DEFAULT_GRID_SIZE, DEFAULT_KERNEL_SIZE
+from .main_window_signal_connector import MainWindowSignalConnector
 
 class MainWindow(QMainWindow):
     """
@@ -48,11 +49,10 @@ class MainWindow(QMainWindow):
         
         # Create the right side (control panel) first so it can be passed to left side widgets
         right_widget = self._create_right_side()
-        # Create the left side (image processing widgets) with reference to control panel
         left_widget = self._create_left_side()
         
-        # Connect all widget signals now that both sides are created
-        self._connect_widget_signals()
+        self._signal_connector = MainWindowSignalConnector(self)
+        self._signal_connector.connect_all_signals()
         
         # Wrap left side in scroll area to handle vertical overflow when kernel grows
         left_scroll = QScrollArea()
@@ -156,75 +156,6 @@ class MainWindow(QMainWindow):
         
         return self._control_panel
     
-    def _connect_widget_signals(self) -> None:
-        # Connect input mode changes to update input image editing behavior
-        self._control_panel.input_mode_changed.connect(self._input_image.set_edit_mode)
-        
-        # Connect show pixel values changes to update input and output image pixel values
-        self._control_panel.show_pixel_values_changed.connect(self._input_image.set_show_pixel_values)
-        self._control_panel.show_pixel_values_changed.connect(self._output_image.set_show_pixel_values)
-        
-        # Connect show colors changes to update input and output image colors
-        self._control_panel.show_colors_changed.connect(self._input_image.set_show_colors)
-        self._control_panel.show_colors_changed.connect(self._output_image.set_show_colors)
-        
-        self._kernel_config.kernel_size_input.value_changed.connect(self._coordinator.set_kernel_size)
-        
-        # Connect filter changes to kernel config and filter calculations
-        self._control_panel.filter_changed.connect(self._kernel_config.set_filter)
-        self._control_panel.filter_changed.connect(self._filter_calculations.set_filter)
-        
-        # Connect sigma and normalize changes to kernel config
-        self._control_panel.sigma_changed.connect(self._kernel_config.set_sigma)
-        self._control_panel.normalize_changed.connect(self._kernel_config.set_normalize)
-        
-        # Connect profile changes to kernel config
-        self._control_panel.profile_changed.connect(self._kernel_config.set_profile)
-        
-        # Connect category and type changes to filter calculations
-        self._control_panel.category_changed.connect(self._filter_calculations.set_category)
-        self._control_panel.type_changed.connect(self._filter_calculations.set_type)
-        
-        # Connect type changes to final kernel grid widget for convolution flipping
-        self._control_panel.type_changed.connect(self._kernel_config.final_kernel_grid.set_filter_type)
-        
-        # Connect type changes to formula display widget for different formulas
-        self._control_panel.type_changed.connect(self._filter_calculations._formula_widget.set_filter_type)
-        
-        # Connect coordinator state and position changes to filter calculations
-        self._coordinator.state_changed.connect(self._filter_calculations.on_state_changed)
-        self._coordinator.position_changed.connect(self._filter_calculations.update_calculation)
-        
-        # Connect kernel changes to filter calculations
-        self._kernel_config._kernel_model.grid_changed.connect(self._filter_calculations.on_kernel_changed)
-        
-        # Connect constant changes to filter calculations
-        self._kernel_config.constant_input.value_changed.connect(self._filter_calculations.set_constant)
-        
-        # Auto-reset to INITIAL state when any configuration changes
-        self._input_model.grid_changed.connect(self._on_config_changed)
-        self._kernel_config.kernel_size_input.value_changed.connect(self._on_config_changed)
-        self._kernel_config._kernel_model.grid_changed.connect(self._on_config_changed)
-        self._kernel_config.constant_input.value_changed.connect(self._on_config_changed)
-        self._control_panel.category_changed.connect(self._on_config_changed)
-        self._control_panel.type_changed.connect(self._on_config_changed)
-        self._control_panel.filter_changed.connect(self._on_config_changed)
-        self._control_panel.profile_changed.connect(self._on_config_changed)
-        self._control_panel.sigma_changed.connect(self._on_config_changed)
-        self._control_panel.normalize_changed.connect(self._on_config_changed)
-        
-        # Connect image upload grid size detection to update output model and coordinator
-        # (control panel is updated directly in the widget to avoid race conditions)
-        def update_models_from_image(new_size: int) -> None:
-            # Update output model and coordinator to match the new grid size
-            self._output_model.set_grid_size(new_size)
-            self._coordinator.set_grid_size(new_size)
-        
-        self._input_image.grid_size_detected.connect(update_models_from_image)
-        
-        # Initialize kernel config with current filter state now that connections are established
-        current_filter = self._control_panel.filter_dropdown.combobox.currentText()
-        self._kernel_config.set_filter(current_filter)
     
     def _on_config_changed(self, *args) -> None:
         if self._coordinator.get_state() == ApplicationState.NAVIGATING:

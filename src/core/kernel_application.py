@@ -10,9 +10,13 @@ class ApplicationState(Enum):
 
 
 class KernelApplicationCoordinator(QObject):
-    # Signal emitted when the current position changes, passes (row, col) coordinates
+    """
+    Coordinates kernel position and navigation state during filter application.
+    
+    Manages the current position of the kernel as it moves across the input grid,
+    tracking which cells are affected and where output values should be written.
+    """
     position_changed = Signal(int, int)
-    # Signal emitted when the application state changes, passes the new ApplicationState
     state_changed = Signal(object)
     
     def __init__(self, grid_size: int, kernel_size: int):

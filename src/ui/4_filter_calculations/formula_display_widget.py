@@ -1,10 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPixmap, QImage
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-import io
+from utils.latex_renderer import render_latex_to_pixmap
 
 
 class FormulaDisplayWidget(QWidget):
@@ -55,8 +51,7 @@ class FormulaDisplayWidget(QWidget):
             # Fallback message for unsupported filter types
             formula = "No formula available"
         
-        # Convert LaTeX formula to a QPixmap image and display it
-        pixmap = self._latex_to_pixmap(formula)
+        pixmap = render_latex_to_pixmap(formula)
         self._formula_label.setPixmap(pixmap)
     
     def _create_mean_formula(self) -> str:
@@ -86,41 +81,6 @@ class FormulaDisplayWidget(QWidget):
         # G[i,j] = median of all F[i+u, j+v] values in kernel window W
         return r'$G[i, j] = \text{median}\{F[i+u, j+v] : (u,v) \in W\}$'
     
-    def _latex_to_pixmap(self, latex_str: str) -> QPixmap:
-        # Convert a LaTeX formula string to a QPixmap image using matplotlib
-        
-        # Create a matplotlib figure with white background
-        fig = Figure(figsize=(8, 1), facecolor='white')
-        # Create a canvas for rendering the figure
-        canvas = FigureCanvasAgg(fig)
-        # Add a subplot and disable axes (we only want the formula, not a plot)
-        ax = fig.add_subplot(111)
-        ax.axis('off')
-        
-        # Render the LaTeX text centered in the figure
-        ax.text(0.5, 0.5, latex_str, 
-                horizontalalignment='center',  # Center horizontally
-                verticalalignment='center',  # Center vertically
-                fontsize=12,  # Set font size
-                transform=ax.transAxes)  # Use axes coordinates (0-1 range)
-        
-        # Draw the canvas to render the formula
-        canvas.draw()
-        
-        # Save the rendered figure to a BytesIO buffer as PNG
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight', facecolor='white')
-        buf.seek(0)  # Reset buffer position to beginning
-        
-        # Close the matplotlib figure to free memory
-        plt.close(fig)
-        
-        # Load the PNG data into a QImage
-        img = QImage()
-        img.loadFromData(buf.read())
-        
-        # Convert QImage to QPixmap and return
-        return QPixmap.fromImage(img)
     
     def sizeHint(self) -> QSize:
         # Return the preferred size for this widget

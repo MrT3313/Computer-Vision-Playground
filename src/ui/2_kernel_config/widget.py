@@ -1,16 +1,14 @@
 from PySide6.QtWidgets import QFrame, QVBoxLayout, QGroupBox, QWidget, QLabel, QSizePolicy
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPixmap, QImage
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-import io
+from PySide6.QtGui import QPixmap
 
 from core.kernel_grid import KernelGridModel
 from .kernel_grid_widget import KernelGridWidget
 from .final_kernel_grid_widget import FinalKernelGridWidget
 from ui.common.number_input import NumberInputWidget
 from ui.common.dropdown import DropdownWidget
+from ui.common.title_bar_widget import TitleBarWidget
+from utils.latex_renderer import render_latex_to_pixmap
 from consts import (
     DEFAULT_KERNEL_SIZE, MIN_KERNEL_SIZE, MAX_KERNEL_SIZE,
     DEFAULT_CONSTANT_MULTIPLIER, MIN_CONSTANT_MULTIPLIER, MAX_CONSTANT_MULTIPLIER,
@@ -40,22 +38,7 @@ class KernelConfigWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         main_layout.setSpacing(0) # Remove spacing between child widgets
         
-        # Create the title bar frame at the top of the panel
-        title_bar = QFrame()
-        title_bar.setStyleSheet("background-color: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(0, 0, 0, 0.3);")
-        title_bar.setFixedHeight(30) # Fixed height of 30 pixels for title bar
-        
-        # Create layout for the title bar to hold the title label
-        title_layout = QVBoxLayout(title_bar)
-        title_layout.setContentsMargins(5, 0, 5, 0) # Add 5px padding on left and right
-        
-        # Create the title label
-        title_label = QLabel("2. Kernel Config")
-        title_label.setStyleSheet("font-size: 12px; font-weight: bold; background: transparent; border: none;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) # Align text to the left and vertically centered
-        
-        # Add the title label to the title bar layout
-        title_layout.addWidget(title_label)
+        title_bar = TitleBarWidget("2. Kernel Config")
         
         # Create the content area widget that will hold all kernel configuration controls
         content_area = QWidget()
@@ -226,33 +209,8 @@ class KernelConfigWidget(QFrame):
     
     def _render_gaussian_formula(self) -> None:
         formula = r'$G_\sigma = \frac{1}{2\pi\sigma^2} e^{- \, \frac{(x^2+y^2)}{2\sigma^2}}$'
-        pixmap = self._latex_to_pixmap(formula)
+        pixmap = render_latex_to_pixmap(formula, figsize=(2, 1))
         self.gaussian_formula_label.setPixmap(pixmap)
-    
-    def _latex_to_pixmap(self, latex_str: str) -> QPixmap:
-        fig = Figure(figsize=(2, 1), facecolor='white')
-        canvas = FigureCanvasAgg(fig)
-        ax = fig.add_subplot(111)
-        ax.axis('off')
-        
-        ax.text(0.5, 0.5, latex_str, 
-                horizontalalignment='center',
-                verticalalignment='center',
-                fontsize=12,
-                transform=ax.transAxes)
-        
-        canvas.draw()
-        
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight', pad_inches=0, facecolor='white')
-        buf.seek(0)
-        
-        plt.close(fig)
-        
-        img = QImage()
-        img.loadFromData(buf.read())
-        
-        return QPixmap.fromImage(img)
     
     def _apply_gaussian_kernel(self) -> None:
         import math

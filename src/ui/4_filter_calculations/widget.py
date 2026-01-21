@@ -7,6 +7,7 @@ from core.filter_calculators.gaussian_filter import GaussianFilterCalculator
 from core.filter_calculators.median_filter import MedianFilterCalculator
 from .calculation_table_widget import CalculationTableWidget
 from .formula_display_widget import FormulaDisplayWidget
+from ui.common.title_bar_widget import TitleBarWidget
 
 
 class FilterCalculationsWidget(QFrame):
@@ -45,22 +46,7 @@ class FilterCalculationsWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0)  # Remove padding around edges
         main_layout.setSpacing(0)  # Remove spacing between child widgets
         
-        # Create the title bar frame at the top of the panel
-        title_bar = QFrame()
-        title_bar.setStyleSheet("background-color: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(0, 0, 0, 0.3);")
-        title_bar.setFixedHeight(30)  # Fixed height of 30 pixels for title bar
-        
-        # Create layout for the title bar to hold the title label
-        title_layout = QVBoxLayout(title_bar)
-        title_layout.setContentsMargins(5, 0, 5, 0)  # Add 5px padding on left and right
-        
-        # Create the title label
-        title_label = QLabel("4. Filter Calculations")
-        title_label.setStyleSheet("font-size: 12px; font-weight: bold; background: transparent; border: none;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)  # Align text to the left and vertically centered
-        
-        # Add the title label to the title bar layout
-        title_layout.addWidget(title_label)
+        title_bar = TitleBarWidget("4. Filter Calculations")
         
         # Create the content area widget that will hold all filter calculation components
         self._content_area = QWidget()

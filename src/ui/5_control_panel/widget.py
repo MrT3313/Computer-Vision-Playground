@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox, QGridLayout
-from PySide6.QtCore import Signal, QTimer
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QPushButton, QHBoxLayout, QCheckBox, QGridLayout, QFrame
+from PySide6.QtCore import Signal
+from .playback_controller import PlaybackController
 from consts import (
     DEFAULT_GRID_SIZE, MIN_GRID_SIZE, MAX_GRID_SIZE,
     DEFAULT_INPUT_MODE, INPUT_MODES,
@@ -13,9 +14,10 @@ from consts import (
 )
 from ui.common.number_input import NumberInputWidget
 from ui.common.dropdown import DropdownWidget
+from ui.common.title_bar_widget import TitleBarWidget
 
 
-class ControlPanelWidget(QWidget):
+class ControlPanelWidget(QFrame):
     # Signal emitted when the grid size value changes, passes the new grid size as an integer
     grid_size_changed = Signal(int)
     # Signal emitted when the input mode changes, passes the mode as a string
@@ -51,67 +53,63 @@ class ControlPanelWidget(QWidget):
             self._coordinator.position_changed.connect(self._on_position_changed)
     
     def _setup_ui(self):
-        # Create the main vertical layout for the control panel
-        layout = QVBoxLayout(self)
+        self.setFrameShape(QFrame.Shape.Box)
+        self.setLineWidth(2)
         
-        # Create group box for grid configuration controls
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        title_bar = TitleBarWidget("5. Control Panel")
+        layout.addWidget(title_bar)
+        
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(10, 10, 10, 10)
+        content_layout.setSpacing(10)
+        
         grid_group = QGroupBox("Grid Configuration")
         grid_layout = QVBoxLayout()
         
-        # Create number input widget for grid size control
         self.grid_size_input = NumberInputWidget(
             label="Grid Size:",
             default_value=DEFAULT_GRID_SIZE,
             min_value=MIN_GRID_SIZE,
             max_value=MAX_GRID_SIZE
         )
-        # Emit signal when grid size value changes
         self.grid_size_input.value_changed.connect(self.grid_size_changed.emit)
         grid_layout.addWidget(self.grid_size_input)
         
-        # Create checkbox for showing pixel values
         self.show_pixel_values_checkbox = QCheckBox("Show Pixel Values")
         self.show_pixel_values_checkbox.setChecked(True)
         self.show_pixel_values_checkbox.stateChanged.connect(self._on_show_pixel_values_changed)
         grid_layout.addWidget(self.show_pixel_values_checkbox)
         
-        # Create checkbox for showing colors
         self.show_colors_checkbox = QCheckBox("Show Colors")
         self.show_colors_checkbox.setChecked(True)
         self.show_colors_checkbox.stateChanged.connect(self._on_show_colors_changed)
         grid_layout.addWidget(self.show_colors_checkbox)
         
-        # Set the layout for the grid configuration group box
         grid_group.setLayout(grid_layout)
+        content_layout.addWidget(grid_group)
         
-        # Add the grid configuration group to the main layout
-        layout.addWidget(grid_group)
-        
-        # Create group box for input image configuration controls
         input_image_group = QGroupBox("Input Image Configuration")
         input_image_layout = QVBoxLayout()
         
-        # Create dropdown widget for selecting input mode (Toggle or Custom)
         self.input_mode_dropdown = DropdownWidget(
             label="Mode:",
             options=INPUT_MODES,
             default_option=DEFAULT_INPUT_MODE
         )
-        # Emit signal when input mode selection changes
         self.input_mode_dropdown.value_changed.connect(self.input_mode_changed.emit)
         input_image_layout.addWidget(self.input_mode_dropdown)
         
-        # Set the layout for the input image configuration group box
         input_image_group.setLayout(input_image_layout)
+        content_layout.addWidget(input_image_group)
         
-        # Add the input image configuration group to the main layout
-        layout.addWidget(input_image_group)
-        
-        # Create group box for filter configuration controls
         filter_group = QGroupBox("Filter Configuration")
         filter_layout = QVBoxLayout()
         
-        # Create dropdown widget for selecting filter profile
         self.profile_dropdown = DropdownWidget(
             label="Filter Profile:",
             options=FILTER_PROFILES,
@@ -120,7 +118,6 @@ class ControlPanelWidget(QWidget):
         self.profile_dropdown.value_changed.connect(self._on_profile_changed)
         filter_layout.addWidget(self.profile_dropdown)
         
-        # Create dropdown widget for selecting filter category
         self.category_dropdown = DropdownWidget(
             label="Category:",
             options=FILTER_CATEGORIES,
@@ -129,7 +126,6 @@ class ControlPanelWidget(QWidget):
         self.category_dropdown.value_changed.connect(self._on_category_changed)
         filter_layout.addWidget(self.category_dropdown)
         
-        # Create dropdown widget for selecting filter type
         self.type_dropdown = DropdownWidget(
             label="Type:",
             options=FILTER_TYPES,
@@ -138,7 +134,6 @@ class ControlPanelWidget(QWidget):
         self.type_dropdown.value_changed.connect(self._on_type_changed)
         filter_layout.addWidget(self.type_dropdown)
         
-        # Create dropdown widget for selecting specific filter
         self.filter_dropdown = DropdownWidget(
             label="Filter Selection:",
             options=FILTER_SELECTIONS_LINEAR,
@@ -147,7 +142,6 @@ class ControlPanelWidget(QWidget):
         self.filter_dropdown.value_changed.connect(self._on_filter_changed)
         filter_layout.addWidget(self.filter_dropdown)
         
-        # Create number input widget for sigma parameter (initially hidden)
         self.sigma_input = NumberInputWidget(
             label="Sigma (σ):",
             default_value=DEFAULT_SIGMA,
@@ -160,66 +154,51 @@ class ControlPanelWidget(QWidget):
         self.sigma_input.setVisible(False)
         filter_layout.addWidget(self.sigma_input)
         
-        # Create checkbox for kernel normalization (initially hidden)
         self.normalize_checkbox = QCheckBox("Normalize Kernel")
         self.normalize_checkbox.setChecked(True)
         self.normalize_checkbox.stateChanged.connect(self._on_normalize_changed)
         self.normalize_checkbox.setVisible(False)
         filter_layout.addWidget(self.normalize_checkbox)
         
-        # Set the layout for the filter configuration group box
         filter_group.setLayout(filter_layout)
+        content_layout.addWidget(filter_group)
         
-        # Add the filter configuration group to the main layout
-        layout.addWidget(filter_group)
-        
-        # Create group box for navigation controls
         nav_group = QGroupBox("Navigation")
         nav_layout = QVBoxLayout()
         
-        # Create Start button to begin navigation
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self._on_start_clicked)
         nav_layout.addWidget(self.start_button)
         
-        # Create Play button for INITIAL state (below Start)
         self.play_button_initial = QPushButton("Play")
         self.play_button_initial.clicked.connect(self._on_play_clicked)
         nav_layout.addWidget(self.play_button_initial)
         
-        # Create grid layout for navigation buttons in NAVIGATING state
         nav_buttons_layout = QGridLayout()
         
-        # Create Previous button to navigate backwards
         self.previous_button = QPushButton("Previous")
         self.previous_button.clicked.connect(self._on_previous_clicked)
         nav_buttons_layout.addWidget(self.previous_button, 0, 0)
         
-        # Create Next button to navigate forwards
         self.next_button = QPushButton("Next")
         self.next_button.clicked.connect(self._on_next_clicked)
         nav_buttons_layout.addWidget(self.next_button, 0, 1)
         
-        # Create Reset button to return to initial state
         self.reset_button = QPushButton("Reset")
         self.reset_button.clicked.connect(self._on_reset_clicked)
         nav_buttons_layout.addWidget(self.reset_button, 1, 0)
         
-        # Create Play button for NAVIGATING state
         self.play_button_navigating = QPushButton("Play")
         self.play_button_navigating.clicked.connect(self._on_play_clicked)
         nav_buttons_layout.addWidget(self.play_button_navigating, 1, 1)
         
-        # Create Pause button (initially hidden)
         self.pause_button = QPushButton("Pause")
         self.pause_button.clicked.connect(self._on_pause_clicked)
         nav_buttons_layout.addWidget(self.pause_button, 1, 1)
         self.pause_button.setVisible(False)
         
-        # Add the navigation buttons layout to the navigation group layout
         nav_layout.addLayout(nav_buttons_layout)
         
-        # Create speed input for controlling auto-progression speed
         self.speed_input = NumberInputWidget(
             label="Speed:",
             default_value=0.5,
@@ -232,25 +211,20 @@ class ControlPanelWidget(QWidget):
         self.speed_input.value_changed.connect(self._on_speed_changed)
         nav_layout.addWidget(self.speed_input)
         
-        # Create timer for auto-progression
-        self._play_timer = QTimer()
-        self._play_timer.setSingleShot(False)
-        self._play_timer.timeout.connect(self._on_play_timer_timeout)
-        self._play_timer.setInterval(500)
+        self._playback_controller = PlaybackController(self._coordinator, self.speed_input)
+        self._playback_controller.playback_state_changed.connect(self._on_playback_state_changed)
         nav_group.setLayout(nav_layout)
         
-        # Add the navigation group to the main layout
-        layout.addWidget(nav_group)
+        content_layout.addWidget(nav_group)
         
-        # Set initial button visibility based on application state
         self._update_button_visibility()
         self._update_play_pause_buttons()
         
-        # Set initial Type dropdown state based on default filter selection (Mean)
         self.type_dropdown.combobox.setEnabled(False)
         
-        # Add stretchable space at the bottom to push controls to the top
-        layout.addStretch()
+        content_layout.addStretch()
+        
+        layout.addWidget(content_widget, 1)
     
     def _on_start_clicked(self) -> None:
         # Start navigation when Start button is clicked
@@ -273,47 +247,15 @@ class ControlPanelWidget(QWidget):
             self._coordinator.next()
     
     def _on_play_clicked(self) -> None:
-        # Start auto-progression when Play button is clicked
-        if not self._coordinator:
-            return
-        
-        from core import ApplicationState
-        # If in INITIAL state, start navigation first
-        if self._coordinator.get_state() == ApplicationState.INITIAL:
-            self._coordinator.start()
-        
-        # Update timer interval to current speed value before starting
-        speed = self.speed_input.value()
-        interval_ms = int(speed * 1000)
-        self._play_timer.setInterval(interval_ms)
-        
-        # Start the timer for auto-progression
-        if not self._play_timer.isActive():
-            self._play_timer.start()
-            self._update_play_pause_buttons()
+        self._playback_controller.start()
     
     def _on_pause_clicked(self) -> None:
-        # Pause auto-progression when Pause button is clicked
-        if self._play_timer.isActive():
-            self._play_timer.stop()
-            self._update_play_pause_buttons()
-            self._update_button_states()
+        self._playback_controller.stop()
+        self._update_button_states()
     
-    def _on_play_timer_timeout(self) -> None:
-        # Auto-advance to next position when timer fires
-        if not self._coordinator:
-            self._play_timer.stop()
-            self._update_play_pause_buttons()
-            self._update_button_states()
-            return
-        
-        # Check if we can go to the next position
-        if self._coordinator.can_go_next():
-            self._coordinator.next()
-        else:
-            # Reached the end, stop the timer
-            self._play_timer.stop()
-            self._update_play_pause_buttons()
+    def _on_playback_state_changed(self, is_playing: bool) -> None:
+        self._update_play_pause_buttons()
+        if not is_playing:
             self._update_button_states()
     
     def _on_show_pixel_values_changed(self, state: int) -> None:
@@ -407,34 +349,19 @@ class ControlPanelWidget(QWidget):
         self.normalize_changed.emit(is_checked)
     
     def _on_speed_changed(self, speed: float) -> None:
-        # Update timer interval when speed changes
-        interval_ms = int(speed * 1000)
-        was_active = self._play_timer.isActive()
-        
-        # If timer is running, restart it with new interval for immediate effect
-        if was_active:
-            self._play_timer.stop()
-            self._play_timer.setInterval(interval_ms)
-            self._play_timer.start()
-        else:
-            # Just update interval if timer is not running
-            self._play_timer.setInterval(interval_ms)
+        self._playback_controller.update_speed()
     
     def _on_state_changed(self, state) -> None:
-        # Stop play timer if it's running when state changes
-        if self._play_timer.isActive():
-            self._play_timer.stop()
-        # Update UI when application state changes
-        self._update_button_visibility()  # Show/hide buttons based on state
-        self._update_button_states()  # Enable/disable buttons based on navigation availability
-        self._update_play_pause_buttons()  # Update play/pause button visibility
+        if self._playback_controller.is_playing():
+            self._playback_controller.stop()
+        self._update_button_visibility()
+        self._update_button_states()
+        self._update_play_pause_buttons()
     
     def _on_position_changed(self, row: int, col: int) -> None:
-        # Update button enabled/disabled states when position changes during navigation
         self._update_button_states()
-        # Stop timer if we've reached the end and timer is still running
-        if self._play_timer.isActive() and self._coordinator and not self._coordinator.can_go_next():
-            self._play_timer.stop()
+        if self._playback_controller.is_playing() and self._coordinator and not self._coordinator.can_go_next():
+            self._playback_controller.stop()
             self._update_play_pause_buttons()
             self._update_button_states()
     
@@ -460,17 +387,15 @@ class ControlPanelWidget(QWidget):
             self.pause_button.setVisible(False)
     
     def _update_play_pause_buttons(self) -> None:
-        # Update play/pause button visibility based on timer state
         if not self._coordinator:
             return
         
         from core import ApplicationState
-        # Only show play/pause buttons in NAVIGATING state
         if self._coordinator.get_state() != ApplicationState.NAVIGATING:
             self.speed_input.setVisible(False)
             return
         
-        is_playing = self._play_timer.isActive()
+        is_playing = self._playback_controller.is_playing()
         # Show pause button when playing, show play button when not playing
         self.pause_button.setVisible(is_playing)
         self.play_button_navigating.setVisible(not is_playing)
@@ -491,15 +416,13 @@ class ControlPanelWidget(QWidget):
             self.next_button.setToolTip("")
     
     def _update_button_states(self) -> None:
-        # Enable/disable Previous and Next buttons based on navigation boundaries
         if not self._coordinator:
             return
         
         from core import ApplicationState
         is_initial = self._coordinator.get_state() == ApplicationState.INITIAL
         
-        # If play is active, buttons should be disabled (handled by _update_play_pause_buttons)
-        is_playing = self._play_timer.isActive()
+        is_playing = self._playback_controller.is_playing()
         if is_playing:
             self.previous_button.setEnabled(False)
             self.next_button.setEnabled(False)

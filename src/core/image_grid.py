@@ -2,6 +2,11 @@ from PySide6.QtCore import QObject, Signal
 
 
 class ImageGridModel(QObject):
+    """
+    Model representing a 2D grid of pixel values for input or output images.
+    
+    Emits grid_changed signal when grid size or cell values are modified.
+    """
     grid_changed = Signal(int, list)
     
     def __init__(self, size: int, initial_value: int | None = 255):

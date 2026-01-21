@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QWidget
+from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
-from ui.common import PixelGridWidget
+from ui.common import PixelGridWidget, TitleBarWidget
 
 class OutputImageWidget(QFrame):
     def __init__(self, model, coordinator=None):
@@ -33,22 +33,7 @@ class OutputImageWidget(QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0) # Remove padding around edges
         main_layout.setSpacing(0) # Remove spacing between child widgets
         
-        # Create the title bar frame at the top of the panel
-        title_bar = QFrame()
-        title_bar.setStyleSheet("background-color: rgba(0, 0, 0, 0.2); border-bottom: 1px solid rgba(0, 0, 0, 0.3);")
-        title_bar.setFixedHeight(30) # Fixed height of 30 pixels for title bar
-        
-        # Create layout for the title bar to hold the title label
-        title_layout = QVBoxLayout(title_bar)
-        title_layout.setContentsMargins(5, 0, 5, 0) # Add 5px padding on left and right
-        
-        # Create the title label
-        title_label = QLabel("3. Output Image: G(i,j)")
-        title_label.setStyleSheet("font-size: 12px; font-weight: bold; background: transparent; border: none;")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter) # Align text to the left and vertically centered
-        
-        # Add the title label to the title bar layout
-        title_layout.addWidget(title_label)
+        title_bar = TitleBarWidget("3. Output Image: G(i,j)")
         
         # Create the content area widget that will hold the pixel grid
         content_area = QWidget()

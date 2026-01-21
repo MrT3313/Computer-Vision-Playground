@@ -2,6 +2,11 @@ from PySide6.QtCore import QObject, Signal
 
 
 class KernelGridModel(QObject):
+    """
+    Model representing a 2D grid of kernel weights for filter operations.
+    
+    Emits grid_changed signal when kernel size or weights are modified.
+    """
     grid_changed = Signal(int, list)
     
     def __init__(self, size: int):

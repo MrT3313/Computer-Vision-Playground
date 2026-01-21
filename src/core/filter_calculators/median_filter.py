@@ -1,14 +1,12 @@
-class MedianFilterCalculator:
-    def __init__(self, input_model, kernel_model, coordinator):
-        self._input_model = input_model
-        self._kernel_model = kernel_model
-        self._coordinator = coordinator
-    
-    def calculate(self, constant: float) -> dict:
+from typing import Any
+from .base_filter import BaseFilterCalculator
+
+
+class MedianFilterCalculator(BaseFilterCalculator):
+    def calculate(self, constant: float, filter_type: str = "Cross-Correlation") -> dict[str, Any]:
         affected_cells = self._coordinator.get_affected_cells()
         output_cell = self._coordinator.get_output_cell()
         
-        kernel_size = self._kernel_model.get_grid_size()
         input_data = self._input_model.get_grid_data()
         
         calculations = []
@@ -52,7 +50,10 @@ class MedianFilterCalculator:
         sorted_with_indices = sorted(enumerate(pixel_values), key=lambda x: x[1])
         for sorted_pos, (original_idx, value) in enumerate(sorted_with_indices):
             calculations[original_idx]['sorted_index'] = sorted_pos
-            calculations[original_idx]['is_median'] = (sorted_pos == median_index) or (num_values % 2 == 0 and sorted_pos in [left_index, right_index])
+            calculations[original_idx]['is_median'] = (
+                sorted_pos == median_index or 
+                (num_values % 2 == 0 and sorted_pos in [left_index, right_index])
+            )
         
         return {
             'calculations': calculations,
@@ -61,3 +62,10 @@ class MedianFilterCalculator:
             'output': median_value,
             'output_cell': output_cell
         }
+    
+    def _calculate_output(self, total_sum: float, kernel_area: int, calculations: list) -> float:
+        """
+        Not used by median filter (uses sorting algorithm instead).
+        Required to satisfy abstract method contract.
+        """
+        return 0.0
